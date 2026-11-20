@@ -1,0 +1,3525 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BOASH CHAMPIONSHIP HUB — SMP BOASH</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            boash: {
+              navy: '#0A192F',
+              navyLight: '#112240',
+              gold: '#D4AF37',
+              goldLight: '#F3E5AB',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Icons & QR Libraries -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #F8FAFC;
+      color: #0F172A;
+    }
+    .pulse-ring {
+      animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulseRing {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(1.25); }
+    }
+    .sync-flash {
+      animation: syncFlash 0.9s ease-out;
+    }
+    @keyframes syncFlash {
+      0% { transform: scale(1.06); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.45); }
+      100% { transform: scale(1); box-shadow: none; }
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #F1F5F9; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- ====================================================================== -->
+  <!-- TOP NAVIGATION BAR + PHASE 10 LIVE SYNC INDICATOR (WHITE TEXT BADGE)   -->
+  <!-- ====================================================================== -->
+  <header id="main-navbar" class="sticky top-0 z-40 bg-[#0A192F] text-white border-b border-slate-800 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 gap-3">
+        <!-- Brand Logo -->
+        <div class="flex items-center gap-3 cursor-pointer" onclick="switchPublicTab('home')">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4AF37] to-amber-500 text-[#0A192F] flex items-center justify-center font-extrabold text-lg shadow-md">
+            BC
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span id="nav-event-title" class="font-extrabold tracking-tight text-sm sm:text-base text-white">BOASH CHAMPIONSHIP HUB</span>
+            </div>
+            <p id="nav-event-subtitle" class="text-[11px] text-slate-300 hidden sm:block">Portal Resmi Turnamen Antar SD/MI — SMP BOASH</p>
+          </div>
+        </div>
+
+        <!-- Right Controls: Live Sync White-Text Badge + Display Board + Admin Button -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Phase 10 Live Sync Indicator Badge (Badge Teks Putih) -->
+          <div id="live-sync-badge"
+               onclick="triggerManualSyncPulse()"
+               title="Klik untuk sinkronisasi instan dengan database"
+               class="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/80 text-xs font-bold tracking-wide shadow-sm transition">
+            <span id="live-sync-dot" class="w-2 h-2 rounded-full bg-white pulse-ring"></span>
+            <span id="live-sync-label" class="text-white">LIVE SYNC</span>
+            <span id="live-sync-version" class="hidden md:inline font-mono text-[10px] text-white/90 border-l border-white/30 pl-2">v--</span>
+          </div>
+
+          <!-- Display Mode Button -->
+          <button type="button"
+                  onclick="openDisplayBoardMode()"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-semibold transition">
+            <i data-lucide="monitor-play" class="w-4 h-4 text-[#D4AF37]"></i>
+            <span class="hidden sm:inline">Display Arena</span>
+          </button>
+
+          <!-- Admin Login / Workspace Button -->
+          <button id="btn-nav-admin"
+                  type="button"
+                  onclick="handleAdminNavClick()"
+                  class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#D4AF37] hover:bg-amber-400 text-[#0A192F] text-xs font-extrabold shadow-sm transition">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+            <span id="btn-nav-admin-text">Panel Panitia</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Public Sub-Navigation Tabs -->
+      <nav id="public-subnav" class="flex items-center gap-1 overflow-x-auto pb-2.5 pt-1 text-xs font-semibold">
+        <button data-pubtab="home" onclick="switchPublicTab('home')" class="pub-tab-btn px-3.5 py-1.5 rounded-lg bg-white text-[#0A192F] font-bold whitespace-nowrap transition">
+          Beranda & Klasemen
+        </button>
+        <button data-pubtab="register" onclick="switchPublicTab('register')" class="pub-tab-btn px-3.5 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 whitespace-nowrap transition">
+          Pendaftaran Kontingen
+        </button>
+        <button data-pubtab="status" onclick="switchPublicTab('status')" class="pub-tab-btn px-3.5 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 whitespace-nowrap transition">
+          Cek Status & E-Pass QR
+        </button>
+        <button data-pubtab="gallery" onclick="switchPublicTab('gallery')" class="pub-tab-btn px-3.5 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 whitespace-nowrap transition">
+          Galeri Dokumentasi
+        </button>
+        <button data-pubtab="verify-cert" onclick="switchPublicTab('verify-cert')" class="pub-tab-btn px-3.5 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 whitespace-nowrap transition">
+          Verifikasi Sertifikat
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ====================================================================== -->
+  <!-- MAIN CONTENT CONTAINER                                                 -->
+  <!-- ====================================================================== -->
+  <main id="public-portal-wrapper" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ==================================================================== -->
+    <!-- PUBLIC TAB 1: BERANDA, JADWAL, KLASEMEN & HALL OF CHAMPIONS          -->
+    <!-- ==================================================================== -->
+    <section id="pub-view-home" class="space-y-8">
+      <!-- Hero Banner -->
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0A192F] via-[#112240] to-slate-900 text-white p-6 sm:p-8 shadow-xl border border-slate-800">
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div class="space-y-3 max-w-2xl">
+            <div class="flex flex-wrap items-center gap-2">
+              <span id="hero-reg-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-600 text-white text-xs font-bold">
+                <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+                PENDAFTARAN DIBUKA
+              </span>
+              <span id="hero-date-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-white text-xs font-semibold">
+                <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#D4AF37]"></i>
+                <span id="hero-event-dates">SMP BOASH Arena</span>
+              </span>
+            </div>
+            <h1 id="hero-main-heading" class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
+              BOASH CHAMPIONSHIP HUB
+            </h1>
+            <p id="hero-main-desc" class="text-sm sm:text-base text-slate-300 leading-relaxed">
+              Ajang kompetisi olahraga dan seni Islami tingkat SD/MI se-Jabodetabek: Turnamen Futsal Putra, Kejuaraan Badminton, dan Festival Hadroh SMP BOASH.
+            </p>
+            <div class="pt-2 flex flex-wrap gap-3">
+              <button onclick="switchPublicTab('register')" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-amber-400 text-[#0A192F] font-extrabold text-sm shadow-md transition">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                Daftar Sekarang
+              </button>
+              <button onclick="switchPublicTab('status')" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-semibold text-sm transition">
+                <i data-lucide="qr-code" class="w-4 h-4 text-[#D4AF37]"></i>
+                Cek Status & E-Pass QR
+              </button>
+            </div>
+          </div>
+
+          <!-- Real-Time Quota Summary Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3 min-w-[260px]">
+            <div class="bg-white/10 backdrop-blur-sm border border-white/15 rounded-xl p-3.5 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] uppercase tracking-wider text-slate-300 font-semibold">Futsal Putra SD/MI</p>
+                <p id="quota-futsal-text" class="text-lg font-extrabold text-white mt-0.5">0 / 24 Tim</p>
+              </div>
+              <span id="quota-futsal-badge" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold">Tersedia</span>
+            </div>
+            <div class="bg-white/10 backdrop-blur-sm border border-white/15 rounded-xl p-3.5 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] uppercase tracking-wider text-slate-300 font-semibold">Badminton (All Nomor)</p>
+                <p id="quota-badminton-text" class="text-lg font-extrabold text-white mt-0.5">0 Peserta</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-lg bg-sky-600 text-white text-xs font-bold">Aktif</span>
+            </div>
+            <div class="bg-white/10 backdrop-blur-sm border border-white/15 rounded-xl p-3.5 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] uppercase tracking-wider text-slate-300 font-semibold">Festival Hadroh</p>
+                <p id="quota-hadroh-text" class="text-lg font-extrabold text-white mt-0.5">0 / 20 Grup</p>
+              </div>
+              <span id="quota-hadroh-badge" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold">Tersedia</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Announcements Ticker / Feed -->
+      <div id="public-announcements-box" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-md bg-amber-600 text-white text-xs font-bold">PENGUMUMAN RESMI</span>
+            <h2 class="font-bold text-slate-900 text-sm sm:text-base">Informasi & Papan Buletin Panitia</h2>
+          </div>
+        </div>
+        <div id="public-announcements-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      </div>
+
+      <!-- Hall of Champions (If Published) -->
+      <div id="public-champions-section" class="hidden bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+              <i data-lucide="trophy" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-extrabold text-slate-900">Hall of Champions</h2>
+              <p class="text-xs text-slate-500">Daftar Pemenang Resmi BOASH Championship</p>
+            </div>
+          </div>
+          <span class="px-3 py-1 rounded-full bg-[#0A192F] text-white text-xs font-bold">RESMI</span>
+        </div>
+        <div id="public-champions-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </div>
+
+      <!-- Live & Upcoming Matches + Branch Filter -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-extrabold text-slate-900">Jadwal & Hasil Pertandingan</h2>
+            <p class="text-xs text-slate-500">Pembaruan skor langsung dari meja panitia pertandingan</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="pub-schedule-branch-filter" onchange="renderPublicPortalViews()" class="px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold bg-slate-50">
+              <option value="ALL">Semua Cabang</option>
+              <option value="FUTSAL">Futsal</option>
+              <option value="BADMINTON">Badminton</option>
+              <option value="HADROH">Hadroh</option>
+            </select>
+            <select id="pub-schedule-status-filter" onchange="renderPublicPortalViews()" class="px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold bg-slate-50">
+              <option value="ALL">Semua Status</option>
+              <option value="LIVE">Sedang Berlangsung (LIVE)</option>
+              <option value="UPCOMING">Akan Datang</option>
+              <option value="FINISHED">Selesai</option>
+            </select>
+          </div>
+        </div>
+        <div id="public-schedules-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="col-span-full text-center py-8 text-sm text-slate-400">Memuat jadwal pertandingan...</div>
+        </div>
+      </div>
+
+      <!-- Group Standings & Hadroh Leaderboard -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Standings (Futsal & Badminton) -->
+        <div class="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h2 class="text-lg font-extrabold text-slate-900">Klasemen Fase Grup</h2>
+              <p class="text-xs text-slate-500">Peringkat otomatis berdasarkan poin, selisih gol/set, dan produktivitas</p>
+            </div>
+            <select id="pub-standing-branch-filter" onchange="renderPublicPortalViews()" class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-semibold bg-slate-50">
+              <option value="ALL">Semua Klasemen</option>
+              <option value="FUTSAL">Futsal</option>
+              <option value="BADMINTON">Badminton</option>
+            </select>
+          </div>
+          <div id="public-standings-container" class="space-y-5">
+            <p class="text-sm text-slate-400 py-6 text-center">Belum ada klasemen grup yang terbentuk.</p>
+          </div>
+        </div>
+
+        <!-- Hadroh Ranking / Queue & Approved Participants Summary -->
+        <div class="lg:col-span-4 space-y-6">
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-extrabold text-slate-900 text-base">Festival Hadroh</h3>
+              <span id="pub-hadroh-status-badge" class="px-2.5 py-0.5 rounded-full bg-slate-700 text-white text-[11px] font-bold">Urutan Tampil</span>
+            </div>
+            <div id="public-hadroh-box" class="space-y-2 text-xs">
+              <p class="text-slate-400">Memuat data peserta Hadroh...</p>
+            </div>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-extrabold text-slate-900 text-base">Kontingen Terverifikasi</h3>
+              <span id="pub-approved-count-badge" class="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-xs font-bold">0 Tim</span>
+            </div>
+            <input type="text" id="pub-participant-search" oninput="renderPublicParticipantsList()" placeholder="Cari nama sekolah atau tim..." class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+            <div id="public-participants-list" class="max-h-72 overflow-y-auto divide-y divide-slate-100 text-xs"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regulations & Venues -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-3">
+          <h3 class="font-extrabold text-slate-900 text-base flex items-center gap-2">
+            <i data-lucide="book-open-check" class="w-5 h-5 text-amber-600"></i>
+            Regulasi & Ketentuan Lomba
+          </h3>
+          <div id="public-regulations-list" class="space-y-2.5 text-xs"></div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-3">
+          <h3 class="font-extrabold text-slate-900 text-base flex items-center gap-2">
+            <i data-lucide="map-pin" class="w-5 h-5 text-emerald-600"></i>
+            Arena & Lapangan Pertandingan
+          </h3>
+          <div id="public-venues-list" class="space-y-2.5 text-xs"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================================== -->
+    <!-- PUBLIC TAB 2: PENDAFTARAN ONLINE KONTINGEN (PHASE 1)                 -->
+    <!-- ==================================================================== -->
+    <section id="pub-view-register" class="hidden max-w-4xl mx-auto space-y-6">
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+        <div class="border-b border-slate-100 pb-4 mb-6">
+          <span class="px-3 py-1 rounded-full bg-[#0A192F] text-white text-xs font-bold">FORMULIR RESMI</span>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-2">Pendaftaran Online Kontingen Sekolah</h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">Lengkapi identitas sekolah, pembina pendamping, dan daftar atlet/personil sesuai cabang lomba.</p>
+        </div>
+
+        <form id="public-register-form" onsubmit="submitPublicRegistration(event)" class="space-y-6">
+          <!-- Branch Selection -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">1. Pilih Cabang Kompetisi *</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <label class="cursor-pointer">
+                <input type="radio" name="reg_cabang" value="FUTSAL" checked onchange="onRegisterBranchChange()" class="peer sr-only" />
+                <div class="p-4 rounded-xl border-2 border-slate-200 peer-checked:border-[#0A192F] peer-checked:bg-slate-900 peer-checked:text-white transition">
+                  <div class="font-extrabold text-sm">FUTSAL PUTRA</div>
+                  <div class="text-[11px] opacity-80 mt-0.5">Tim Sekolah (Min. 5 Pemain)</div>
+                </div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="reg_cabang" value="BADMINTON" onchange="onRegisterBranchChange()" class="peer sr-only" />
+                <div class="p-4 rounded-xl border-2 border-slate-200 peer-checked:border-[#0A192F] peer-checked:bg-slate-900 peer-checked:text-white transition">
+                  <div class="font-extrabold text-sm">BADMINTON</div>
+                  <div class="text-[11px] opacity-80 mt-0.5">Tunggal & Ganda Putra/Putri</div>
+                </div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="reg_cabang" value="HADROH" onchange="onRegisterBranchChange()" class="peer sr-only" />
+                <div class="p-4 rounded-xl border-2 border-slate-200 peer-checked:border-[#0A192F] peer-checked:bg-slate-900 peer-checked:text-white transition">
+                  <div class="font-extrabold text-sm">FESTIVAL HADROH</div>
+                  <div class="text-[11px] opacity-80 mt-0.5">Grup Rebana (Min. 5 Personil)</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- School & Coach Info -->
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
+            <h3 class="text-sm font-extrabold text-slate-900">2. Identitas Sekolah & Pembina Pendamping</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nama Sekolah (SD/MI) *</label>
+                <input type="text" id="reg-nama-sekolah" required placeholder="Contoh: SD Negeri 01 Boash" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">NPSN Sekolah</label>
+                <input type="text" id="reg-npsn" placeholder="8 digit NPSN (opsional)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Kabupaten / Kota *</label>
+                <input type="text" id="reg-kabupaten" required placeholder="Contoh: Kab. Bogor" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Sekolah</label>
+                <input type="text" id="reg-alamat" placeholder="Alamat lengkap sekolah" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nama Guru Pembina / Official *</label>
+                <input type="text" id="reg-nama-pembina" required placeholder="Nama lengkap beserta gelar" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nomor WhatsApp Aktif Pembina *</label>
+                <input type="tel" id="reg-wa-pembina" required placeholder="Contoh: 081234567890" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white" />
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-bold text-slate-700 mb-1">Email Pembina (Opsional)</label>
+                <input type="email" id="reg-email-pembina" placeholder="pembina@sekolah.sch.id" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Branch Specific Fields -->
+          <!-- A. FUTSAL -->
+          <div id="reg-fields-futsal" class="space-y-4">
+            <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
+              <h3 class="text-sm font-extrabold text-slate-900">3. Data Tim & Skuad Futsal (Minimal 5 Pemain)</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Nama Tim Futsal *</label>
+                  <input type="text" id="reg-futsal-nama-tim" placeholder="Contoh: Garuda Muda FC" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Nama Pelatih</label>
+                  <input type="text" id="reg-futsal-pelatih" placeholder="Nama pelatih tim" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Warna Jersey Utama</label>
+                  <input type="text" id="reg-futsal-jersey" placeholder="Contoh: Merah - Putih" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+                </div>
+              </div>
+
+              <div class="space-y-2 pt-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-700">Daftar Pemain (Pemain #1 otomatis Kapten)</span>
+                  <button type="button" onclick="addFutsalPlayerRow()" class="px-3 py-1.5 rounded-lg bg-[#0A192F] text-white text-xs font-bold hover:bg-slate-800">
+                    + Tambah Pemain
+                  </button>
+                </div>
+                <div id="futsal-players-container" class="space-y-2"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- B. BADMINTON -->
+          <div id="reg-fields-badminton" class="hidden space-y-4">
+            <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
+              <h3 class="text-sm font-extrabold text-slate-900">3. Nomor Pertandingan & Data Atlet Badminton</h3>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Kategori Nomor Pertandingan *</label>
+                <select id="reg-bdm-kategori" onchange="onBadmintonCategoryChange()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white"></select>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Nama Atlet Utama *</label>
+                  <input type="text" id="reg-bdm-p1-nama" placeholder="Nama lengkap atlet 1" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">NISN Atlet 1</label>
+                  <input type="text" id="reg-bdm-p1-nisn" placeholder="NISN" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Kelas</label>
+                  <input type="text" id="reg-bdm-p1-kelas" placeholder="Contoh: 6A" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+                </div>
+              </div>
+              <div id="reg-bdm-player2-box" class="hidden grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-slate-100">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Nama Atlet Pasangan (Ganda) *</label>
+                  <input type="text" id="reg-bdm-p2-nama" placeholder="Nama lengkap atlet 2" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">NISN Atlet 2</label>
+                  <input type="text" id="reg-bdm-p2-nisn" placeholder="NISN" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Kelas</label>
+                  <input type="text" id="reg-bdm-p2-kelas" placeholder="Contoh: 6B" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- C. HADROH -->
+          <div id="reg-fields-hadroh" class="hidden space-y-4">
+            <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
+              <h3 class="text-sm font-extrabold text-slate-900">3. Data Grup & Personil Festival Hadroh (Minimal 5 Personil)</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Nama Grup Hadroh *</label>
+                  <input type="text" id="reg-hadroh-nama-grup" placeholder="Contoh: Syubbanul Boash" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Nama Official / Koordinator</label>
+                  <input type="text" id="reg-hadroh-official" placeholder="Nama official grup" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Judul Sholawat / Lagu Wajib</label>
+                  <input type="text" id="reg-hadroh-lagu-wajib" placeholder="Contoh: Ya Habibal Qolbi" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Judul Sholawat / Lagu Pilihan</label>
+                  <input type="text" id="reg-hadroh-lagu-pilihan" placeholder="Contoh: Assalamualaik" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+                </div>
+              </div>
+
+              <div class="space-y-2 pt-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-700">Daftar Personil Hadroh</span>
+                  <button type="button" onclick="addHadrohMemberRow()" class="px-3 py-1.5 rounded-lg bg-[#0A192F] text-white text-xs font-bold hover:bg-slate-800">
+                    + Tambah Personil
+                  </button>
+                </div>
+                <div id="hadroh-members-container" class="space-y-2"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 pt-2">
+            <button type="submit" id="btn-submit-register" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-md transition inline-flex items-center gap-2">
+              <i data-lucide="send" class="w-4 h-4"></i>
+              Kirim Pendaftaran Kontingen
+            </button>
+          </div>
+        </form>
+
+        <!-- Registration Success Receipt Card -->
+        <div id="registration-receipt-card" class="hidden mt-6 bg-emerald-50 border-2 border-emerald-500 rounded-2xl p-6 space-y-4">
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 rounded-full bg-emerald-600 text-white text-xs font-extrabold">PENDAFTARAN TERKIRIM</span>
+            <span class="text-xs text-emerald-800 font-semibold">Simpan Nomor Registrasi di bawah ini!</span>
+          </div>
+          <div class="bg-white rounded-xl p-4 border border-emerald-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p class="text-xs text-slate-500">Nomor Registrasi Resmi:</p>
+              <p id="receipt-no-reg" class="text-2xl font-mono font-extrabold text-[#0A192F] tracking-wider">BCH-FTS-2026-001</p>
+              <p id="receipt-summary" class="text-xs text-slate-700 mt-1"></p>
+            </div>
+            <button type="button" onclick="copyReceiptNumber()" class="px-4 py-2 rounded-xl bg-[#0A192F] text-white text-xs font-bold hover:bg-slate-800">
+              Salin Nomor Registrasi
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================================== -->
+    <!-- PUBLIC TAB 3: CEK STATUS & E-PASS QR CODE (PHASE 1 & PHASE 6)        -->
+    <!-- ==================================================================== -->
+    <section id="pub-view-status" class="hidden max-w-2xl mx-auto space-y-6">
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-5">
+        <div>
+          <span class="px-3 py-1 rounded-full bg-[#0A192F] text-white text-xs font-bold">E-PASS & VERIFIKASI</span>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-2">Cek Status Pendaftaran & Kartu QR Check-In</h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">Masukkan Nomor Registrasi (contoh: <code class="font-mono bg-slate-100 px-1.5 py-0.5 rounded">BCH-FTS-2026-001</code>) untuk mengunduh E-Pass QR kedatangan.</p>
+        </div>
+
+        <form onsubmit="checkPublicRegStatus(event)" class="flex flex-col sm:flex-row gap-3">
+          <input type="text" id="status-search-input" required placeholder="Masukkan Nomor Registrasi..." class="flex-1 px-4 py-3 rounded-xl border border-slate-300 font-mono text-sm uppercase" />
+          <button type="submit" class="px-6 py-3 rounded-xl bg-[#0A192F] hover:bg-slate-800 text-white font-bold text-sm transition">
+            Cek Status
+          </button>
+        </form>
+
+        <div id="status-result-box" class="hidden border border-slate-200 rounded-2xl p-5 bg-slate-50 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
+            <div>
+              <p id="st-res-noreg" class="font-mono font-extrabold text-base text-[#0A192F]"></p>
+              <p id="st-res-school" class="text-xs text-slate-600"></p>
+            </div>
+            <span id="st-res-badge" class="px-3 py-1 rounded-full text-xs font-extrabold text-white bg-amber-600">PENDING</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <span class="text-slate-500 block">Cabang / Kategori</span>
+              <strong id="st-res-branch" class="text-slate-900"></strong>
+            </div>
+            <div>
+              <span class="text-slate-500 block">Nama Tim / Peserta</span>
+              <strong id="st-res-entity" class="text-slate-900"></strong>
+            </div>
+            <div>
+              <span class="text-slate-500 block">Pembina Pendamping</span>
+              <strong id="st-res-coach" class="text-slate-900"></strong>
+            </div>
+            <div>
+              <span class="text-slate-500 block">Catatan Panitia</span>
+              <strong id="st-res-notes" class="text-slate-900">-</strong>
+            </div>
+          </div>
+
+          <!-- QR Pass Container (Shown only when APPROVED) -->
+          <div id="st-res-qr-wrapper" class="hidden bg-white border-2 border-dashed border-emerald-400 rounded-2xl p-5 text-center space-y-3">
+            <span class="inline-block px-3 py-1 rounded-full bg-emerald-600 text-white text-xs font-extrabold">OFFICIAL E-PASS QR CHECK-IN</span>
+            <div id="st-res-qrcode" class="flex justify-center py-2"></div>
+            <p id="st-res-qrtoken" class="font-mono text-xs text-slate-600"></p>
+            <p class="text-[11px] text-slate-500">Tunjukkan QR Code ini kepada petugas meja registrasi ulang saat tiba di arena SMP BOASH.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================================================================== -->
+    <!-- PUBLIC TAB 4: GALERI DOKUMENTASI GOOGLE DRIVE (PHASE 7)              -->
+    <!-- ==================================================================== -->
+    <section id="pub-view-gallery" class="hidden space-y-6">
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <span class="px-3 py-1 rounded-full bg-[#0A192F] text-white text-xs font-bold">DOKUMENTASI RESMI</span>
+          <h2 class="text-xl font-extrabold text-slate-900 mt-1.5">Galeri Foto & Momen Pertandingan</h2>
+        </div>
+        <select id="pub-gallery-filter" onchange="renderPublicGallery()" class="px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50">
+          <option value="ALL">Semua Kategori</option>
+          <option value="FUTSAL">Futsal</option>
+          <option value="BADMINTON">Badminton</option>
+          <option value="HADROH">Hadroh</option>
+          <option value="UMUM">Seremoni & Umum</option>
+        </select>
+      </div>
+      <div id="public-gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="col-span-full text-center py-12 text-sm text-slate-400">Memuat galeri dokumentasi...</div>
+      </div>
+    </section>
+
+    <!-- ==================================================================== -->
+    <!-- PUBLIC TAB 5: VERIFIKASI SERTIFIKAT DIGITAL (PHASE 7)                -->
+    <!-- ==================================================================== -->
+    <section id="pub-view-verify-cert" class="hidden max-w-2xl mx-auto space-y-6">
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-5">
+        <div>
+          <span class="px-3 py-1 rounded-full bg-emerald-600 text-white text-xs font-bold">KEASLIAN DOKUMEN</span>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-2">Verifikasi Sertifikat Digital Kejuaraan</h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">Masukkan Nomor Sertifikat (<code class="font-mono bg-slate-100 px-1 rounded">CERT-BCH-...</code>) atau Kode Verifikasi (<code class="font-mono bg-slate-100 px-1 rounded">VER-BCH-...</code>) yang tertera pada piagam PDF.</p>
+        </div>
+
+        <form onsubmit="verifyPublicCertificate(event)" class="flex flex-col sm:flex-row gap-3">
+          <input type="text" id="cert-verify-input" required placeholder="Contoh: VER-BCH-A1B2C3D4" class="flex-1 px-4 py-3 rounded-xl border border-slate-300 font-mono text-sm uppercase" />
+          <button type="submit" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition">
+            Verifikasi Sekarang
+          </button>
+        </form>
+
+        <div id="cert-verify-result" class="hidden rounded-2xl border-2 border-emerald-500 bg-emerald-50 p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="px-3 py-1 rounded-full bg-emerald-600 text-white text-xs font-extrabold">SERTIFIKAT ASLI & TERDAFTAR</span>
+            <span id="cert-res-date" class="text-xs font-mono text-emerald-900"></span>
+          </div>
+          <div class="bg-white rounded-xl p-4 border border-emerald-200 space-y-2 text-xs">
+            <div class="flex justify-between"><span class="text-slate-500">Nomor Sertifikat:</span><strong id="cert-res-number" class="font-mono text-slate-900"></strong></div>
+            <div class="flex justify-between"><span class="text-slate-500">Kode Verifikasi:</span><strong id="cert-res-code" class="font-mono text-emerald-700"></strong></div>
+            <div class="flex justify-between"><span class="text-slate-500">Nama Penerima:</span><strong id="cert-res-recipient" class="text-slate-900"></strong></div>
+            <div class="flex justify-between"><span class="text-slate-500">Asal Sekolah:</span><strong id="cert-res-school" class="text-slate-900"></strong></div>
+            <div class="flex justify-between"><span class="text-slate-500">Predikat / Juara:</span><strong id="cert-res-achievement" class="text-amber-700"></strong></div>
+            <div class="flex justify-between"><span class="text-slate-500">Cabang Lomba:</span><strong id="cert-res-branch" class="text-slate-900"></strong></div>
+          </div>
+          <div id="cert-res-pdf-box" class="pt-1">
+            <a id="cert-res-pdf-link" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0A192F] text-white text-xs font-bold hover:bg-slate-800">
+              <i data-lucide="file-text" class="w-4 h-4 text-[#D4AF37]"></i>
+              Buka Dokumen PDF Resmi (Google Drive)
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ====================================================================== -->
+  <!-- PHASE 6: FULL-SCREEN TOURNAMENT DISPLAY BOARD OVERLAY                  -->
+  <!-- ====================================================================== -->
+  <div id="display-board-overlay" class="hidden fixed inset-0 z-50 bg-[#0A192F] text-white overflow-y-auto">
+    <div class="min-h-screen flex flex-col justify-between p-4 sm:p-6">
+      <!-- Top Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-[#D4AF37] text-[#0A192F] flex items-center justify-center font-extrabold text-xl">BC</div>
+          <div>
+            <h1 id="disp-event-title" class="text-xl sm:text-2xl font-extrabold tracking-tight text-white">BOASH CHAMPIONSHIP ARENA BOARD</h1>
+            <p class="text-xs text-slate-400">Live Scoreboard, Klasemen & Antrean Tampil Real-Time</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-600 text-white border border-emerald-400 text-xs font-extrabold">
+            <span class="w-2 h-2 rounded-full bg-white pulse-ring"></span>
+            AUTO LIVE SYNC AKTIF
+          </span>
+          <span id="disp-clock" class="font-mono text-lg font-bold text-[#D4AF37] bg-white/10 px-3 py-1 rounded-lg">--:--:--</span>
+          <button onclick="closeDisplayBoardMode()" class="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold">
+            Tutup Display
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 my-5 flex-1">
+        <!-- Live & Upcoming Matches -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="bg-[#112240] border border-slate-700 rounded-2xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-sm font-extrabold uppercase tracking-wider text-[#D4AF37]">Sedang Bertanding (LIVE)</h2>
+              <span id="disp-live-count" class="px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-xs font-bold">0 Match</span>
+            </div>
+            <div id="disp-live-matches" class="space-y-3"></div>
+          </div>
+
+          <div class="bg-[#112240] border border-slate-700 rounded-2xl p-4">
+            <h2 class="text-sm font-extrabold uppercase tracking-wider text-sky-400 mb-3">Pertandingan Berikutnya</h2>
+            <div id="disp-upcoming-matches" class="space-y-2.5 text-xs"></div>
+          </div>
+        </div>
+
+        <!-- Standings & Hadroh -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="bg-[#112240] border border-slate-700 rounded-2xl p-4">
+            <h2 class="text-sm font-extrabold uppercase tracking-wider text-emerald-400 mb-3">Klasemen Sementara Grup</h2>
+            <div id="disp-standings-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs"></div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-[#112240] border border-slate-700 rounded-2xl p-4">
+              <h2 class="text-sm font-extrabold uppercase tracking-wider text-amber-400 mb-2">Festival Hadroh</h2>
+              <div id="disp-hadroh-list" class="space-y-1.5 text-xs"></div>
+            </div>
+            <div class="bg-[#112240] border border-slate-700 rounded-2xl p-4">
+              <h2 class="text-sm font-extrabold uppercase tracking-wider text-purple-300 mb-2">Informasi & Kehadiran</h2>
+              <p id="disp-checkin-stat" class="text-xs text-slate-300 mb-2"></p>
+              <div id="disp-announcements-list" class="space-y-2 text-xs"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ====================================================================== -->
+  <!-- ADMIN LOGIN MODAL                                                      -->
+  <!-- ====================================================================== -->
+  <div id="admin-login-modal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-5">
+      <div class="flex items-start justify-between">
+        <div>
+          <span class="px-2.5 py-0.5 rounded-md bg-[#0A192F] text-white text-[11px] font-bold">AKSES TERBATAS</span>
+          <h2 class="text-xl font-extrabold text-slate-900 mt-1.5">Login Panel Panitia & Juri</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Masuk menggunakan akun resmi BOASH Championship Hub</p>
+        </div>
+        <button type="button" onclick="closeAdminLoginModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="submitAdminLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Username</label>
+          <input type="text" id="login-username" required autocomplete="username" placeholder="Masukkan username panitia" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
+          <input type="password" id="login-password" required autocomplete="current-password" placeholder="Masukkan password" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
+        </div>
+        <div id="login-error-box" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700"></div>
+        <button type="submit" id="btn-submit-login" class="w-full py-3 rounded-xl bg-[#0A192F] hover:bg-slate-800 text-white font-extrabold text-sm shadow-md transition">
+          Masuk ke Workspace Panitia
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- ADMIN & JUDGE WORKSPACE WRAPPER (PHASE 2 - PHASE 9)                    -->
+  <!-- ====================================================================== -->
+  <section id="admin-workspace-wrapper" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <!-- Admin Session Header Bar -->
+    <div class="bg-[#0A192F] text-white rounded-2xl p-4 sm:p-5 shadow-md border border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-xl bg-[#D4AF37] text-[#0A192F] flex items-center justify-center font-extrabold text-base">
+          <i data-lucide="shield" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 id="admin-user-name" class="font-extrabold text-base sm:text-lg text-white">Panitia BOASH</h2>
+            <span id="admin-user-role" class="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-[11px] font-bold">SUPER_ADMIN</span>
+            <span id="admin-user-branch" class="px-2.5 py-0.5 rounded-full bg-white/15 text-white text-[11px] font-semibold">Cabang: ALL</span>
+          </div>
+          <p class="text-xs text-slate-300 mt-0.5">Command Center Operasional Turnamen — Auto-Sync Terhubung ke Google Sheets</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button" onclick="switchToPublicMode()" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-semibold transition inline-flex items-center gap-1.5">
+          <i data-lucide="globe" class="w-4 h-4 text-[#D4AF37]"></i>
+          Lihat Portal Publik
+        </button>
+        <button type="button" onclick="logoutAdminSession()" class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition inline-flex items-center gap-1.5">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+          Keluar
+        </button>
+      </div>
+    </div>
+
+    <!-- Admin Module Navigation Tabs -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-2 shadow-sm overflow-x-auto">
+      <div id="admin-tabs-nav" class="flex items-center gap-1.5 min-w-max text-xs font-bold">
+        <button data-admtab="overview" data-perm="dashboard.view" onclick="switchAdminTab('overview')" class="adm-tab-btn px-3.5 py-2 rounded-xl bg-[#0A192F] text-white transition">
+          1. Ringkasan
+        </button>
+        <button data-admtab="registrations" data-perm="pendaftaran.view" onclick="switchAdminTab('registrations')" class="adm-tab-btn px-3.5 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition">
+          2. Verifikasi Peserta
+        </button>
+        <button data-admtab="draw-schedule" data-perm="jadwal.manage" onclick="switchAdminTab('draw-schedule')" class="adm-tab-btn px-3.5 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition">
+          3. Grup, Jadwal & Skor
+        </button>
+        <button data-admtab="hadroh-judging" data-perm="hadroh.score" onclick="switchAdminTab('hadroh-judging')" class="adm-tab-btn px-3.5 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition">
+          4. Penilaian Hadroh
+        </button>
+        <button data-admtab="qr-checkin" data-perm="checkin.manage" onclick="switchAdminTab('qr-checkin')" class="adm-tab-btn px-3.5 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition">
+          5. Scan QR Check-In
+        </button>
+        <button data-admtab="gallery-admin" data-perm="dashboard.view" onclick="switchAdminTab('gallery-admin')" class="adm-tab-btn px-3.5 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition">
+          6. Galeri Drive
+        </button>
+        <button data-admtab="certificates-admin" data-perm="sertifikat.manage" onclick="switchAdminTab('certificates-admin')" class="adm-tab-btn px-3.5 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition">
+          7. Sertifikat PDF
+        </button>
+        <button data-admtab="whatsapp-center" data-perm="whatsapp.send" onclick="switchAdminTab('whatsapp-center')" class="adm-tab-btn px-3.5 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition">
+          8. WhatsApp Center
+        </button>
+        <button data-admtab="announcements-admin" data-perm="dashboard.view" onclick="switchAdminTab('announcements-admin')" class="adm-tab-btn px-3.5 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition">
+          9. Pengumuman
+        </button>
+        <button data-admtab="diagnostics-admin" data-perm="*" onclick="switchAdminTab('diagnostics-admin')" class="adm-tab-btn px-3.5 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition">
+          10. Diagnostik & Setting
+        </button>
+        <button data-admtab="users-roles" data-perm="*" onclick="switchAdminTab('users-roles')" class="adm-tab-btn px-3.5 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition">
+          11. Akun & Role
+        </button>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ADMIN TAB 1: DASHBOARD RINGKASAN EKSEKUTIF (PHASE 2)               -->
+    <!-- ================================================================== -->
+    <div id="adm-view-overview" class="space-y-6">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <p class="text-xs font-semibold text-slate-500">Total Pendaftaran</p>
+          <p id="ov-stat-total-reg" class="text-2xl font-extrabold text-slate-900 mt-1">0</p>
+          <span id="ov-stat-pending-reg" class="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-amber-600 text-white text-[11px] font-bold">0 Pending</span>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <p class="text-xs font-semibold text-slate-500">Kontingen Approved</p>
+          <p id="ov-stat-approved-reg" class="text-2xl font-extrabold text-emerald-700 mt-1">0</p>
+          <span id="ov-stat-schools" class="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-slate-800 text-white text-[11px] font-bold">0 Sekolah</span>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <p class="text-xs font-semibold text-slate-500">Kehadiran Check-In QR</p>
+          <p id="ov-stat-checkin" class="text-2xl font-extrabold text-sky-700 mt-1">0</p>
+          <span class="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-sky-600 text-white text-[11px] font-bold">Meja Registrasi</span>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <p class="text-xs font-semibold text-slate-500">Pertandingan & Sertifikat</p>
+          <p id="ov-stat-matches" class="text-2xl font-extrabold text-purple-700 mt-1">0 Match</p>
+          <span id="ov-stat-certs" class="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-purple-600 text-white text-[11px] font-bold">0 Sertifikat</span>
+        </div>
+      </div>
+
+      <!-- Branch Breakdown & Recent Audit Logs -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <h3 class="font-extrabold text-slate-900 text-base">Rekapitulasi Per Cabang</h3>
+          <div id="ov-branch-breakdown" class="space-y-3 text-xs"></div>
+        </div>
+        <div class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <h3 class="font-extrabold text-slate-900 text-base">Log Aktivitas Sistem Terbaru</h3>
+          <div id="ov-audit-logs" class="max-h-72 overflow-y-auto divide-y divide-slate-100 text-xs"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ADMIN TAB 2: VERIFIKASI & MANAJEMEN PENDAFTARAN (PHASE 2)          -->
+    <!-- ================================================================== -->
+    <div id="adm-view-registrations" class="hidden space-y-5">
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h3 class="text-lg font-extrabold text-slate-900">Verifikasi Berkas & Roster Pendaftaran</h3>
+            <p class="text-xs text-slate-500">Setujui pendaftaran untuk menerbitkan Token QR E-Pass secara otomatis</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="adm-reg-branch-filter" onchange="loadAdminRegistrations()" class="px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50">
+              <option value="ALL">Semua Cabang</option>
+              <option value="FUTSAL">Futsal</option>
+              <option value="BADMINTON">Badminton</option>
+              <option value="HADROH">Hadroh</option>
+            </select>
+            <select id="adm-reg-status-filter" onchange="loadAdminRegistrations()" class="px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50">
+              <option value="ALL">Semua Status</option>
+              <option value="PENDING">PENDING</option>
+              <option value="APPROVED">APPROVED</option>
+              <option value="REJECTED">REJECTED</option>
+            </select>
+            <input type="text" id="adm-reg-search" oninput="renderAdminRegistrationsTable()" placeholder="Cari sekolah / no. reg..." class="px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 uppercase">
+                <th class="py-3 px-3">No. Reg & Tanggal</th>
+                <th class="py-3 px-3">Cabang</th>
+                <th class="py-3 px-3">Sekolah & Pembina</th>
+                <th class="py-3 px-3">Tim / Peserta</th>
+                <th class="py-3 px-3">Status & QR</th>
+                <th class="py-3 px-3 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="adm-registrations-tbody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ADMIN TAB 3: AUTO-DRAW GRUP, JADWAL, SKOR & JUARA (PHASE 3 & 4)    -->
+    <!-- ================================================================== -->
+    <div id="adm-view-draw-schedule" class="hidden space-y-6">
+      <!-- Generator Controls -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Auto Draw & Auto Schedule -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <h3 class="font-extrabold text-slate-900 text-base">1. Generator Grup (Auto-Draw) & Jadwal</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Cabang</label>
+              <select id="draw-cabang" onchange="onDrawBranchChange()" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold">
+                <option value="FUTSAL">FUTSAL</option>
+                <option value="BADMINTON">BADMINTON</option>
+              </select>
+            </div>
+            <div id="draw-kategori-box" class="hidden">
+              <label class="block font-bold text-slate-700 mb-1">Kategori Badminton</label>
+              <select id="draw-kategori-id" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold"></select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Jumlah Grup</label>
+              <input type="number" id="draw-num-groups" value="4" min="1" max="16" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Tanggal Mulai Pertandingan</label>
+              <input type="date" id="draw-start-date" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Jam Mulai & Durasi (Menit)</label>
+              <div class="flex gap-2">
+                <input type="time" id="draw-start-time" value="08:00" class="w-1/2 px-2.5 py-2 rounded-xl border border-slate-300" />
+                <input type="number" id="draw-duration" value="25" min="10" max="120" class="w-1/2 px-2.5 py-2 rounded-xl border border-slate-300" />
+              </div>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nama Lapangan</label>
+              <input type="text" id="draw-lapangan" value="Lapangan Utama A" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button type="button" onclick="triggerAutoDrawGroups()" class="px-4 py-2 rounded-xl bg-[#0A192F] hover:bg-slate-800 text-white text-xs font-bold">
+              Acak Pembagian Grup
+            </button>
+            <button type="button" onclick="triggerGenerateSchedules()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">
+              Generate Jadwal Round-Robin
+            </button>
+          </div>
+        </div>
+
+        <!-- Manual Match / Knockout Stage & Official Champion Publisher -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <h3 class="font-extrabold text-slate-900 text-base">2. Tambah Pertandingan Manual / Fase Gugur</h3>
+          <form onsubmit="submitManualMatch(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Cabang</label>
+              <select id="man-match-cabang" onchange="populateManualMatchEntities()" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold">
+                <option value="FUTSAL">FUTSAL</option>
+                <option value="BADMINTON">BADMINTON</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Tahap Babak</label>
+              <select id="man-match-tahap" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold">
+                <option value="GROUP_STAGE">Penyisihan Grup</option>
+                <option value="QUARTER_FINAL">Perempat Final (8 Besar)</option>
+                <option value="SEMI_FINAL">Semifinal</option>
+                <option value="THIRD_PLACE">Perebutan Juara 3</option>
+                <option value="FINAL">GRAND FINAL</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Tim / Peserta A</label>
+              <select id="man-match-entitas-a" class="w-full px-3 py-2 rounded-xl border border-slate-300"></select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Tim / Peserta B</label>
+              <select id="man-match-entitas-b" class="w-full px-3 py-2 rounded-xl border border-slate-300"></select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Tanggal & Jam</label>
+              <div class="flex gap-2">
+                <input type="date" id="man-match-tanggal" required class="w-3/5 px-2.5 py-2 rounded-xl border border-slate-300" />
+                <input type="time" id="man-match-jam" value="10:00" required class="w-2/5 px-2.5 py-2 rounded-xl border border-slate-300" />
+              </div>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Lapangan</label>
+              <input type="text" id="man-match-lapangan" value="Lapangan Utama" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+            </div>
+            <div class="sm:col-span-2 flex justify-end">
+              <button type="submit" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold">
+                + Simpan Jadwal Pertandingan
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Live Match Scoring & Standings -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base">3. Kontrol Skor Pertandingan (LIVE & FINAL)</h3>
+            <p class="text-xs text-slate-500">Menyimpan skor berstatus FINISHED akan menghitung ulang klasemen grup secara otomatis</p>
+          </div>
+          <select id="adm-match-filter" onchange="renderAdminMatchesTable()" class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold">
+            <option value="ALL">Semua Pertandingan</option>
+            <option value="FUTSAL">Futsal</option>
+            <option value="BADMINTON">Badminton</option>
+          </select>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 uppercase">
+                <th class="py-2.5 px-3">Kode & Waktu</th>
+                <th class="py-2.5 px-3">Cabang / Grup</th>
+                <th class="py-2.5 px-3">Pertandingan</th>
+                <th class="py-2.5 px-3">Skor A vs B</th>
+                <th class="py-2.5 px-3">Status</th>
+                <th class="py-2.5 px-3 text-right">Simpan</th>
+              </tr>
+            </thead>
+            <tbody id="adm-matches-tbody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Publish Official Champions (Hall of Champions) -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+        <h3 class="font-extrabold text-slate-900 text-base">4. Penetapan Juara Resmi (Hall of Champions)</h3>
+        <form onsubmit="submitOfficialChampion(event)" class="grid grid-cols-1 sm:grid-cols-5 gap-3 text-xs items-end">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Cabang</label>
+            <select id="champ-cabang" onchange="populateChampionEntities()" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold">
+              <option value="FUTSAL">FUTSAL</option>
+              <option value="BADMINTON">BADMINTON</option>
+              <option value="HADROH">HADROH</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Peringkat</label>
+            <select id="champ-peringkat" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold">
+              <option value="1">Juara 1</option>
+              <option value="2">Juara 2</option>
+              <option value="3">Juara 3</option>
+              <option value="4">Juara Harapan 1</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block font-bold text-slate-700 mb-1">Pilih Kontingen Pemenang</label>
+            <select id="champ-entitas-id" required class="w-full px-3 py-2 rounded-xl border border-slate-300"></select>
+          </div>
+          <div>
+            <button type="submit" class="w-full py-2 px-4 rounded-xl bg-[#0A192F] hover:bg-slate-800 text-white font-extrabold">
+              Publikasikan Juara
+            </button>
+          </div>
+        </form>
+        <div id="adm-champions-list" class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs pt-2"></div>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ADMIN TAB 4: MEJA PENILAIAN DEWAN JURI HADROH (PHASE 5)            -->
+    <!-- ================================================================== -->
+    <div id="adm-view-hadroh-judging" class="hidden space-y-6">
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h3 class="text-lg font-extrabold text-slate-900">Meja Penilaian Dewan Juri Festival Hadroh</h3>
+          <p class="text-xs text-slate-500">Input nilai juri per aspek penilaian; sistem menghitung rata-rata berbobot secara otomatis</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="hadroh-pub-state-badge" class="px-3 py-1 rounded-full bg-slate-700 text-white text-xs font-bold">Hasil Belum Dipublikasikan</span>
+          <button type="button" onclick="toggleHadrohPublicResults()" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold">
+            Toggle Publikasi Hasil
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Scoring Form -->
+        <div class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <h4 class="font-extrabold text-slate-900 text-sm">Input / Perbarui Nilai Grup Hadroh</h4>
+          <form onsubmit="submitHadrohScoreForm(event)" class="space-y-4 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Pilih Grup Hadroh Peserta *</label>
+              <select id="hadroh-score-grup-id" onchange="loadExistingJudgeScoresForGroup()" required class="w-full px-3 py-2.5 rounded-xl border border-slate-300 font-bold"></select>
+            </div>
+            <div id="hadroh-criteria-inputs" class="space-y-3"></div>
+            <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm">
+              Simpan Nilai Dewan Juri
+            </button>
+          </form>
+        </div>
+
+        <!-- Live Leaderboard -->
+        <div class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <h4 class="font-extrabold text-slate-900 text-sm">Rekapitulasi Peringkat Sementara Dewan Juri</h4>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 uppercase">
+                  <th class="py-2.5 px-3">Rank</th>
+                  <th class="py-2.5 px-3">No. Tampil</th>
+                  <th class="py-2.5 px-3">Grup & Sekolah</th>
+                  <th class="py-2.5 px-3">Juri Menilai</th>
+                  <th class="py-2.5 px-3 text-right">Nilai Akhir</th>
+                </tr>
+              </thead>
+              <tbody id="adm-hadroh-ranking-tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ADMIN TAB 5: MEJA SCAN QR CODE CHECK-IN (PHASE 6)                  -->
+    <!-- ================================================================== -->
+    <div id="adm-view-qr-checkin" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Scanner & Manual Input -->
+        <div class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-extrabold text-slate-900 text-base">Pemindai E-Pass QR Kedatangan</h3>
+            <span id="checkin-ratio-badge" class="px-2.5 py-1 rounded-full bg-emerald-600 text-white text-xs font-bold">0 / 0 Hadir</span>
+          </div>
+
+          <!-- Camera Scanner Box -->
+          <div class="bg-slate-900 rounded-xl p-3 text-center space-y-2">
+            <div id="qr-reader-viewport" class="w-full overflow-hidden rounded-lg"></div>
+            <div class="flex justify-center gap-2">
+              <button type="button" id="btn-start-qr-cam" onclick="startQrCameraScanner()" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">
+                Aktifkan Kamera Scan
+              </button>
+              <button type="button" id="btn-stop-qr-cam" onclick="stopQrCameraScanner()" class="hidden px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold">
+                Matikan Kamera
+              </button>
+            </div>
+          </div>
+
+          <!-- Manual Code Fallback -->
+          <form onsubmit="submitManualQrCheckin(event)" class="space-y-2.5 pt-2 border-t border-slate-100 text-xs">
+            <label class="block font-bold text-slate-700">Input Manual Token QR / Nomor Registrasi</label>
+            <div class="flex gap-2">
+              <input type="text" id="manual-checkin-code" required placeholder="BCHQR-... atau BCH-FTS-2026-001" class="flex-1 px-3 py-2.5 rounded-xl border border-slate-300 font-mono uppercase" />
+              <button type="submit" class="px-4 py-2.5 rounded-xl bg-[#0A192F] hover:bg-slate-800 text-white font-extrabold">
+                Check-In
+              </button>
+            </div>
+          </form>
+
+          <!-- Last Scan Result Banner -->
+          <div id="qr-scan-feedback-box" class="hidden rounded-xl p-4 border text-xs space-y-2"></div>
+        </div>
+
+        <!-- Attendance Log & Approved Checklist -->
+        <div class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <h3 class="font-extrabold text-slate-900 text-base">Daftar Kehadiran & Status Check-In Kontingen</h3>
+          <div class="overflow-x-auto max-h-[460px] overflow-y-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 uppercase">
+                  <th class="py-2.5 px-3">No. Reg</th>
+                  <th class="py-2.5 px-3">Cabang</th>
+                  <th class="py-2.5 px-3">Kontingen & Sekolah</th>
+                  <th class="py-2.5 px-3">Status</th>
+                  <th class="py-2.5 px-3 text-right">Aksi Cepat</th>
+                </tr>
+              </thead>
+              <tbody id="adm-checkin-tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ADMIN TAB 6: MANAJEMEN GALERI GOOGLE DRIVE (PHASE 7)               -->
+    <!-- ================================================================== -->
+    <div id="adm-view-gallery-admin" class="hidden space-y-6">
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+        <h3 class="font-extrabold text-slate-900 text-base">Tambah Dokumentasi Foto / Video Google Drive</h3>
+        <form onsubmit="submitAdminGalleryItem(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Judul Dokumentasi *</label>
+            <input type="text" id="gal-judul" required placeholder="Contoh: Pembukaan Turnamen Futsal" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Kategori *</label>
+            <select id="gal-kategori" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold">
+              <option value="UMUM">UMUM / SEREMONI</option>
+              <option value="FUTSAL">FUTSAL</option>
+              <option value="BADMINTON">BADMINTON</option>
+              <option value="HADROH">HADROH</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Nama Album</label>
+            <input type="text" id="gal-album" value="BOASH Championship 2026" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block font-bold text-slate-700 mb-1">Link Share Google Drive atau File ID *</label>
+            <input type="text" id="gal-media-url" required placeholder="https://drive.google.com/file/d/1A2B3C.../view" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Tanggal Kegiatan</label>
+            <input type="date" id="gal-tanggal" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+          </div>
+          <div class="sm:col-span-3 flex justify-end">
+            <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#0A192F] hover:bg-slate-800 text-white font-extrabold">
+              + Simpan ke Galeri Publik
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div id="adm-gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ADMIN TAB 7: PENERBITAN SERTIFIKAT DIGITAL PDF (PHASE 7)           -->
+    <!-- ================================================================== -->
+    <div id="adm-view-certificates-admin" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Single & Batch Generator -->
+        <div class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <h3 class="font-extrabold text-slate-900 text-base">Penerbitan Sertifikat PDF (Google Drive)</h3>
+          <form onsubmit="submitGenerateSingleCertificate(event)" class="space-y-3 text-xs">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Jenis Sertifikat</label>
+                <select id="cert-jenis" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold">
+                  <option value="JUARA">Sertifikat Juara</option>
+                  <option value="PARTICIPATION">Sertifikat Peserta</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Cabang</label>
+                <select id="cert-cabang" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold">
+                  <option value="FUTSAL">FUTSAL</option>
+                  <option value="BADMINTON">BADMINTON</option>
+                  <option value="HADROH">HADROH</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nama Penerima (Atlet / Tim / Grup) *</label>
+              <input type="text" id="cert-penerima" required placeholder="Contoh: Garuda Muda FC" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nama Sekolah *</label>
+              <input type="text" id="cert-sekolah" required placeholder="Contoh: SD Negeri 01 Boash" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Predikat / Pencapaian *</label>
+              <input type="text" id="cert-pencapaian" required placeholder="Contoh: Juara 1 Turnamen Futsal Putra" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+            </div>
+            <button type="submit" id="btn-gen-single-cert" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold">
+              Terbitkan PDF Satuan
+            </button>
+          </form>
+
+          <div class="pt-3 border-t border-slate-200 space-y-2">
+            <p class="text-xs font-bold text-slate-700">Penerbitan Massal Otomatis (Batch PDF):</p>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <button type="button" onclick="triggerBatchCertificates('OFFICIAL_CHAMPIONS')" class="py-2 px-3 rounded-xl bg-[#0A192F] hover:bg-slate-800 text-white font-bold">
+                Batch Semua Juara
+              </button>
+              <button type="button" onclick="triggerBatchCertificates('APPROVED_PARTICIPANTS')" class="py-2 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold">
+                Batch Semua Peserta
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Issued Certificates List -->
+        <div class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <h3 class="font-extrabold text-slate-900 text-base">Arsip Sertifikat Digital Terbit</h3>
+          <div class="overflow-x-auto max-h-[460px] overflow-y-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 uppercase">
+                  <th class="py-2.5 px-3">No. Sertifikat & Kode</th>
+                  <th class="py-2.5 px-3">Penerima & Sekolah</th>
+                  <th class="py-2.5 px-3">Predikat</th>
+                  <th class="py-2.5 px-3 text-right">PDF & Hapus</th>
+                </tr>
+              </thead>
+              <tbody id="adm-certificates-tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ADMIN TAB 8: WHATSAPP NOTIFICATION CENTER (PHASE 8)                -->
+    <!-- ================================================================== -->
+    <div id="adm-view-whatsapp-center" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Composer -->
+        <div class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <h3 class="font-extrabold text-slate-900 text-base">Pusat Pesan & Broadcast WhatsApp Pembina</h3>
+          <form onsubmit="submitWhatsAppMessage(event)" class="space-y-3 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Mode Pengiriman</label>
+              <select id="wa-send-mode" onchange="onWaModeChange()" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold">
+                <option value="SINGLE">Kirim Tunggal ke Kontingen</option>
+                <option value="BROADCAST_APPROVED">Broadcast Semua Kontingen APPROVED</option>
+              </select>
+            </div>
+
+            <div id="wa-single-target-box">
+              <label class="block font-bold text-slate-700 mb-1">Pilih Kontingen / Pembina</label>
+              <select id="wa-recipient-reg-id" class="w-full px-3 py-2 rounded-xl border border-slate-300"></select>
+            </div>
+
+            <div id="wa-broadcast-branch-box" class="hidden">
+              <label class="block font-bold text-slate-700 mb-1">Filter Cabang Broadcast</label>
+              <select id="wa-broadcast-branch" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold">
+                <option value="ALL">Semua Cabang (Approved)</option>
+                <option value="FUTSAL">Futsal</option>
+                <option value="BADMINTON">Badminton</option>
+                <option value="HADROH">Hadroh</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Isi Pesan WhatsApp *</label>
+              <textarea id="wa-message-body" rows="5" required placeholder="Halo Bapak/Ibu {PEMBINA} dari {NAMA_SEKOLAH}, informasi resmi untuk kontingen {NAMA_TIM} ({NO_REG})..." class="w-full px-3 py-2 rounded-xl border border-slate-300"></textarea>
+              <p class="text-[11px] text-slate-500 mt-1">Variabel broadcast: <code class="bg-slate-100 px-1 rounded">{PEMBINA}</code>, <code class="bg-slate-100 px-1 rounded">{NAMA_SEKOLAH}</code>, <code class="bg-slate-100 px-1 rounded">{NAMA_TIM}</code>, <code class="bg-slate-100 px-1 rounded">{NO_REG}</code></p>
+            </div>
+
+            <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm">
+              Proses & Catat Notifikasi WhatsApp
+            </button>
+          </form>
+        </div>
+
+        <!-- Log Table -->
+        <div class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-extrabold text-slate-900 text-base">Riwayat & Antrean Pengiriman WhatsApp</h3>
+            <span id="wa-stats-badge" class="px-2.5 py-1 rounded-full bg-slate-800 text-white text-xs font-bold">0 Log</span>
+          </div>
+          <div class="overflow-x-auto max-h-[460px] overflow-y-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 uppercase">
+                  <th class="py-2.5 px-3">Tujuan & Sekolah</th>
+                  <th class="py-2.5 px-3">Pesan</th>
+                  <th class="py-2.5 px-3">Status</th>
+                  <th class="py-2.5 px-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="adm-wa-logs-tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ADMIN TAB 9: MANAJEMEN PENGUMUMAN RESMI (PHASE 9)                  -->
+    <!-- ================================================================== -->
+    <div id="adm-view-announcements-admin" class="hidden space-y-6">
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+        <h3 class="font-extrabold text-slate-900 text-base">Buat Pengumuman Baru (Portal Publik & Display Arena)</h3>
+        <form onsubmit="submitAdminAnnouncement(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div class="sm:col-span-2">
+            <label class="block font-bold text-slate-700 mb-1">Judul Pengumuman *</label>
+            <input type="text" id="ann-judul" required placeholder="Contoh: Technical Meeting Dilaksanakan Pukul 09.00 WIB" class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Pin di Display Arena?</label>
+            <select id="ann-pinned" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold">
+              <option value="TRUE">Ya, Tampilkan di Display Arena</option>
+              <option value="FALSE">Hanya Portal Publik</option>
+            </select>
+          </div>
+          <div class="sm:col-span-3">
+            <label class="block font-bold text-slate-700 mb-1">Isi Ringkasan Pengumuman *</label>
+            <textarea id="ann-ringkasan" rows="2" required placeholder="Tulis detail informasi untuk peserta dan penonton..." class="w-full px-3 py-2 rounded-xl border border-slate-300"></textarea>
+          </div>
+          <div class="sm:col-span-3 flex justify-end">
+            <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#0A192F] hover:bg-slate-800 text-white font-extrabold">
+              Publikasikan Pengumuman
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div id="adm-announcements-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ADMIN TAB 10: DIAGNOSTIK 27 SHEET & SYSTEM SETTINGS (PHASE 9 & 10) -->
+    <!-- ================================================================== -->
+    <div id="adm-view-diagnostics-admin" class="hidden space-y-6">
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h3 class="text-lg font-extrabold text-slate-900">Diagnostik Integritas Database (27 Sheet) & Sinkronisasi</h3>
+          <p class="text-xs text-slate-500">Audit struktur kolom, relasi data, token QR, dan kontrol cache server</p>
+        </div>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <button type="button" onclick="runSystemDiagnosticsAdmin(false)" class="px-4 py-2 rounded-xl bg-[#0A192F] hover:bg-slate-800 text-white font-bold">
+            Jalankan Audit Sistem
+          </button>
+          <button type="button" onclick="runSystemDiagnosticsAdmin(true)" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
+            Audit + Auto-Repair QR
+          </button>
+          <button type="button" onclick="clearServerCacheAdmin()" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold">
+            Flush Cache & Bump Sync
+          </button>
+        </div>
+      </div>
+
+      <div id="diagnostics-result-panel" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-xs space-y-4">
+        <p class="text-slate-500">Klik tombol <strong>Jalankan Audit Sistem</strong> untuk memeriksa kesehatan seluruh 27 sheet Google Spreadsheet.</p>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- ADMIN TAB 11: MANAJEMEN AKUN PANITIA & ROLE RBAC (PHASE 2)         -->
+    <!-- ================================================================== -->
+    <div id="adm-view-users-roles" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-4 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <h3 class="font-extrabold text-slate-900 text-base">Tambah Akun Panitia / Dewan Juri</h3>
+          <form onsubmit="submitCreateAdminUser(event)" class="space-y-3 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Nama Lengkap *</label>
+              <input type="text" id="usr-nama" required class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Username Login *</label>
+              <input type="text" id="usr-username" required class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Password Awal *</label>
+              <input type="password" id="usr-password" required class="w-full px-3 py-2 rounded-xl border border-slate-300" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Role Hak Akses *</label>
+              <select id="usr-role-id" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold"></select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Penugasan Cabang</label>
+              <select id="usr-cabang" class="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold">
+                <option value="ALL">ALL (Semua Cabang)</option>
+                <option value="FUTSAL">FUTSAL</option>
+                <option value="BADMINTON">BADMINTON</option>
+                <option value="HADROH">HADROH</option>
+              </select>
+            </div>
+            <button type="submit" class="w-full py-2.5 rounded-xl bg-[#0A192F] hover:bg-slate-800 text-white font-extrabold">
+              Simpan Akun Baru
+            </button>
+          </form>
+        </div>
+
+        <div class="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <h3 class="font-extrabold text-slate-900 text-base">Daftar Akun Pengguna Sistem</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 uppercase">
+                  <th class="py-2.5 px-3">Nama & Username</th>
+                  <th class="py-2.5 px-3">Role</th>
+                  <th class="py-2.5 px-3">Cabang</th>
+                  <th class="py-2.5 px-3">Status</th>
+                </tr>
+              </thead>
+              <tbody id="adm-users-tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================================== -->
+  <!-- MODAL DETAIL ROSTER PENDAFTARAN (ADMIN INSPECTION)                     -->
+  <!-- ====================================================================== -->
+  <div id="reg-detail-modal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl space-y-4">
+      <div class="flex items-start justify-between border-b border-slate-100 pb-3">
+        <div>
+          <span id="modal-reg-branch" class="px-2.5 py-0.5 rounded-md bg-[#0A192F] text-white text-[11px] font-bold">CABANG</span>
+          <h3 id="modal-reg-title" class="text-lg font-extrabold text-slate-900 mt-1">Detail Kontingen</h3>
+          <p id="modal-reg-subtitle" class="text-xs text-slate-500"></p>
+        </div>
+        <button type="button" onclick="closeRegDetailModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div id="modal-reg-body" class="space-y-4 text-xs"></div>
+    </div>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- GALLERY LIGHTBOX MODAL                                                 -->
+  <!-- ====================================================================== -->
+  <div id="gallery-lightbox-modal" onclick="closeGalleryLightbox()" class="hidden fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4">
+    <div onclick="event.stopPropagation()" class="max-w-4xl w-full bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-slate-800 text-white">
+        <h4 id="lightbox-title" class="font-bold text-sm truncate">Dokumentasi</h4>
+        <button type="button" onclick="closeGalleryLightbox()" class="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold">Tutup</button>
+      </div>
+      <div class="bg-black flex items-center justify-center max-h-[75vh]">
+        <img id="lightbox-img" src="" alt="Preview" class="max-h-[75vh] w-auto object-contain" />
+      </div>
+      <p id="lightbox-desc" class="px-4 py-3 text-xs text-slate-300"></p>
+    </div>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- GLOBAL TOAST NOTIFICATION CONTAINER                                    -->
+  <!-- ====================================================================== -->
+  <div id="global-toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- ====================================================================== -->
+  <!-- FOOTER                                                                 -->
+  <!-- ====================================================================== -->
+  <footer class="bg-[#0A192F] text-slate-400 border-t border-slate-800 py-5 mt-12 text-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p class="font-semibold text-slate-300">© 2026 BOASH CHAMPIONSHIP HUB — SMP BOASH. All rights reserved.</p>
+      <p class="font-mono text-[11px] text-slate-400">Engine: Google Apps Script + Real-Time Auto Sync v10.0</p>
+    </div>
+  </footer>
+  <!-- ====================================================================== -->
+  <!-- JAVASCRIPT APPLICATION ENGINE (PHASE 1 TO PHASE 10 LIVE SYNC)          -->
+  <!-- ====================================================================== -->
+  <script>
+    /**
+     * KONFIGURASI URL WEB APP GOOGLE APPS SCRIPT:
+     * Jika index.html di-host di luar Google Apps Script (mis. GitHub Pages / Vercel / Firebase),
+     * isi konstanta GAS_WEB_APP_URL dengan URL deployment /exec Anda.
+     * Jika di-host langsung di GAS HtmlService, Anda juga dapat menyimpannya di localStorage('boash_api_url').
+     */
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw4Wpa26Bwk4XXnSwY9roX6_cHm6oUnQNl9PANtFJl8EnSudblsiAZBPWxeKxd1Q_Z1/exec";
+
+    function resolveApiBaseUrl() {
+      if (GAS_WEB_APP_URL && GAS_WEB_APP_URL.trim() !== "") {
+        return GAS_WEB_APP_URL.trim();
+      }
+      const savedUrl = localStorage.getItem("boash_api_url");
+      if (savedUrl && savedUrl.trim() !== "") {
+        return savedUrl.trim();
+      }
+      const currentHref = window.location.href.split("?")[0];
+      if (currentHref.indexOf("script.google.com") !== -1 && currentHref.endsWith("/exec")) {
+        return currentHref;
+      }
+      return currentHref;
+    }
+
+    /**
+     * GLOBAL APPLICATION STATE
+     */
+    const APP_STATE = {
+      syncVersion: null,
+      syncTimerId: null,
+      displayClockTimerId: null,
+      currentMode: "PUBLIC", // PUBLIC | ADMIN | DISPLAY
+      activePublicTab: "home",
+      activeAdminTab: "overview",
+      bootstrapData: null,
+      portalData: null,
+      galleryItems: [],
+      displayData: null,
+      adminToken: localStorage.getItem("boash_admin_token") || "",
+      adminProfile: null,
+      adminRegistrationsCache: [],
+      adminMatchesCache: [],
+      adminEntitiesCache: { futsal: [], badminton: [], hadroh: [] },
+      hadrohWorkspaceCache: null,
+      qrScannerInstance: null,
+      isQrScannerRunning: false
+    };
+
+    /**
+     * ======================================================================
+     * HTTP CLIENT LAYER (COMPATIBLE WITH GAS WEB APP CORS / REDIRECT)
+     * ======================================================================
+     */
+    async function apiGet(action, paramsObj) {
+      const baseUrl = resolveApiBaseUrl();
+      const url = new URL(baseUrl);
+      url.searchParams.set("action", action);
+      if (paramsObj && typeof paramsObj === "object") {
+        Object.keys(paramsObj).forEach(function(k) {
+          if (paramsObj[k] !== undefined && paramsObj[k] !== null && paramsObj[k] !== "") {
+            url.searchParams.set(k, String(paramsObj[k]));
+          }
+        });
+      }
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        redirect: "follow"
+      });
+      return await response.json();
+    }
+
+    async function apiPost(action, payloadObj) {
+      const baseUrl = resolveApiBaseUrl();
+      const bodyStr = JSON.stringify({
+        action: action,
+        token: APP_STATE.adminToken || "",
+        payload: payloadObj || {}
+      });
+      const response = await fetch(baseUrl, {
+        method: "POST",
+        redirect: "follow",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: bodyStr
+      });
+      const resJson = await response.json();
+      if (!resJson.success && resJson.status === 401 && APP_STATE.adminToken) {
+        clearAdminSessionLocal();
+      }
+      return resJson;
+    }
+
+    /**
+     * ======================================================================
+     * PHASE 10: REAL-TIME AUTO LIVE SYNC ENGINE (getSyncPulse)
+     * ======================================================================
+     */
+    function startAutoSyncEngine() {
+      if (APP_STATE.syncTimerId) clearInterval(APP_STATE.syncTimerId);
+      triggerManualSyncPulse(false);
+
+      APP_STATE.syncTimerId = setInterval(function() {
+        if (!document.hidden) {
+          triggerManualSyncPulse(false);
+        }
+      }, 5000);
+
+      document.addEventListener("visibilitychange", function() {
+        if (!document.hidden) {
+          triggerManualSyncPulse(false);
+        }
+      });
+    }
+
+    async function triggerManualSyncPulse(showFeedback) {
+      const badgeEl = document.getElementById("live-sync-badge");
+      const labelEl = document.getElementById("live-sync-label");
+      const verEl = document.getElementById("live-sync-version");
+
+      try {
+        const res = await apiGet("getSyncPulse", {});
+        if (!res || !res.success || !res.data) return;
+
+        const incomingVer = String(res.data.syncVersion || "");
+        const shortVer = "v" + incomingVer.slice(-6);
+
+        if (badgeEl) {
+          badgeEl.classList.remove("bg-rose-600", "border-rose-400");
+          badgeEl.classList.add("bg-emerald-600", "border-emerald-400/80");
+        }
+        if (labelEl) labelEl.textContent = "LIVE SYNC";
+        if (verEl) verEl.textContent = shortVer;
+
+        const hasChanged = APP_STATE.syncVersion !== null && APP_STATE.syncVersion !== incomingVer;
+        APP_STATE.syncVersion = incomingVer;
+
+        if (hasChanged) {
+          if (badgeEl) {
+            badgeEl.classList.remove("sync-flash");
+            void badgeEl.offsetWidth;
+            badgeEl.classList.add("sync-flash");
+          }
+          await refreshActiveScreenData();
+          if (showFeedback) {
+            showToast("Data berhasil disinkronkan (" + shortVer + ").", "success");
+          }
+        } else if (showFeedback) {
+          await refreshActiveScreenData();
+          showToast("Database sudah dalam kondisi terbaru (" + shortVer + ").", "info");
+        }
+      } catch (err) {
+        if (badgeEl) {
+          badgeEl.classList.remove("bg-emerald-600");
+          badgeEl.classList.add("bg-rose-600");
+        }
+        if (labelEl) labelEl.textContent = "SYNC RETRY";
+      }
+    }
+
+    async function refreshActiveScreenData() {
+      // Jangan timpa DOM form jika user sedang mengetik di dalam input/textarea
+      const activeTag = document.activeElement ? document.activeElement.tagName : "";
+      const isTyping = activeTag === "INPUT" || activeTag === "TEXTAREA" || activeTag === "SELECT";
+
+      if (APP_STATE.currentMode === "DISPLAY") {
+        await loadDisplayBoardData();
+        return;
+      }
+
+      if (APP_STATE.currentMode === "PUBLIC") {
+        if (APP_STATE.activePublicTab === "home") {
+          await Promise.all([loadPublicBootstrap(), loadPublicPortalData()]);
+        } else if (APP_STATE.activePublicTab === "gallery") {
+          await loadPublicGalleryData();
+        }
+        return;
+      }
+
+      if (APP_STATE.currentMode === "ADMIN" && APP_STATE.adminProfile && !isTyping) {
+        await loadActiveAdminTabData(APP_STATE.activeAdminTab);
+      }
+    }
+
+    /**
+     * ======================================================================
+     * NAVIGATION & VIEW SWITCHING (PUBLIC / ADMIN / DISPLAY BOARD)
+     * ======================================================================
+     */
+    function switchPublicTab(tabName) {
+      APP_STATE.currentMode = "PUBLIC";
+      APP_STATE.activePublicTab = tabName;
+
+      document.getElementById("public-portal-wrapper").classList.remove("hidden");
+      document.getElementById("public-subnav").classList.remove("hidden");
+      document.getElementById("admin-workspace-wrapper").classList.add("hidden");
+
+      const allTabs = ["home", "register", "status", "gallery", "verify-cert"];
+      allTabs.forEach(function(t) {
+        const viewEl = document.getElementById("pub-view-" + t);
+        if (viewEl) {
+          if (t === tabName) viewEl.classList.remove("hidden");
+          else viewEl.classList.add("hidden");
+        }
+      });
+
+      document.querySelectorAll(".pub-tab-btn").forEach(function(btn) {
+        if (btn.getAttribute("data-pubtab") === tabName) {
+          btn.className = "pub-tab-btn px-3.5 py-1.5 rounded-lg bg-white text-[#0A192F] font-bold whitespace-nowrap transition";
+        } else {
+          btn.className = "pub-tab-btn px-3.5 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 whitespace-nowrap transition";
+        }
+      });
+
+      if (tabName === "gallery" && APP_STATE.galleryItems.length === 0) {
+        loadPublicGalleryData();
+      }
+      if (tabName === "home") {
+        loadPublicPortalData();
+      }
+    }
+
+    function switchToPublicMode() {
+      stopQrCameraScanner();
+      switchPublicTab(APP_STATE.activePublicTab || "home");
+    }
+
+    function handleAdminNavClick() {
+      if (APP_STATE.adminToken && APP_STATE.adminProfile) {
+        enterAdminWorkspace();
+      } else {
+        document.getElementById("admin-login-modal").classList.remove("hidden");
+        document.getElementById("login-username").focus();
+      }
+    }
+
+    function closeAdminLoginModal() {
+      document.getElementById("admin-login-modal").classList.add("hidden");
+      document.getElementById("login-error-box").classList.add("hidden");
+    }
+
+    function enterAdminWorkspace() {
+      APP_STATE.currentMode = "ADMIN";
+      document.getElementById("public-portal-wrapper").classList.add("hidden");
+      document.getElementById("public-subnav").classList.add("hidden");
+      document.getElementById("admin-workspace-wrapper").classList.remove("hidden");
+
+      const prof = APP_STATE.adminProfile;
+      if (prof) {
+        document.getElementById("admin-user-name").textContent = prof.nama_lengkap;
+        document.getElementById("admin-user-role").textContent = prof.role_code;
+        document.getElementById("admin-user-branch").textContent = "Cabang: " + (prof.cabang_assigned || "ALL");
+        document.getElementById("btn-nav-admin-text").textContent = "Workspace Aktif";
+
+        const perms = prof.permissions || [];
+        let firstAllowedTab = null;
+
+        document.querySelectorAll(".adm-tab-btn").forEach(function(btn) {
+          const reqPerm = btn.getAttribute("data-perm");
+          const tabKey = btn.getAttribute("data-admtab");
+          const allowed = perms.indexOf("*") !== -1 || perms.indexOf(reqPerm) !== -1;
+          if (allowed) {
+            btn.classList.remove("hidden");
+            if (!firstAllowedTab) firstAllowedTab = tabKey;
+          } else {
+            btn.classList.add("hidden");
+          }
+        });
+
+        const targetTab = firstAllowedTab || "overview";
+        switchAdminTab(targetTab);
+      }
+    }
+
+    function switchAdminTab(tabKey) {
+      if (tabKey !== "qr-checkin") {
+        stopQrCameraScanner();
+      }
+      APP_STATE.activeAdminTab = tabKey;
+
+      const adminTabs = [
+        "overview", "registrations", "draw-schedule", "hadroh-judging",
+        "qr-checkin", "gallery-admin", "certificates-admin",
+        "whatsapp-center", "announcements-admin", "diagnostics-admin", "users-roles"
+      ];
+
+      adminTabs.forEach(function(t) {
+        const panel = document.getElementById("adm-view-" + t);
+        if (panel) {
+          if (t === tabKey) panel.classList.remove("hidden");
+          else panel.classList.add("hidden");
+        }
+      });
+
+      document.querySelectorAll(".adm-tab-btn").forEach(function(btn) {
+        if (btn.getAttribute("data-admtab") === tabKey) {
+          btn.className = "adm-tab-btn px-3.5 py-2 rounded-xl bg-[#0A192F] text-white transition";
+        } else {
+          btn.className = "adm-tab-btn px-3.5 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition";
+        }
+      });
+
+      loadActiveAdminTabData(tabKey);
+    }
+
+    async function loadActiveAdminTabData(tabKey) {
+      switch (tabKey) {
+        case "overview":
+          await loadAdminOverview();
+          break;
+        case "registrations":
+          await loadAdminRegistrations();
+          break;
+        case "draw-schedule":
+          await loadAdminMatchesAndStandings();
+          break;
+        case "hadroh-judging":
+          await loadHadrohJudgingWorkspace();
+          break;
+        case "qr-checkin":
+          await loadAdminCheckinData();
+          break;
+        case "gallery-admin":
+          await loadAdminGallery();
+          break;
+        case "certificates-admin":
+          await loadAdminCertificates();
+          break;
+        case "whatsapp-center":
+          await loadAdminWhatsAppWorkspace();
+          break;
+        case "announcements-admin":
+          await loadAdminAnnouncements();
+          break;
+        case "users-roles":
+          await loadAdminUsersAndRoles();
+          break;
+      }
+    }
+
+    /**
+     * ======================================================================
+     * PUBLIC PORTAL DATA LOADERS & RENDERERS (PHASE 1, 4, 7)
+     * ======================================================================
+     */
+    async function loadPublicBootstrap() {
+      try {
+        const res = await apiGet("getPublicBootstrap", {});
+        if (!res.success || !res.data) return;
+        APP_STATE.bootstrapData = res.data;
+
+        const st = res.data.settings || {};
+        if (st.event_title) {
+          document.getElementById("nav-event-title").textContent = st.event_title;
+          document.getElementById("hero-main-heading").textContent = st.event_title;
+          document.getElementById("disp-event-title").textContent = st.event_title + " — LIVE ARENA";
+        }
+        if (st.event_subtitle) {
+          document.getElementById("nav-event-subtitle").textContent = st.event_subtitle;
+        }
+        if (st.event_dates) {
+          document.getElementById("hero-event-dates").textContent = st.event_dates;
+        }
+
+        const regOpen = String(st.registration_open || "TRUE").toUpperCase() === "TRUE";
+        const heroBadge = document.getElementById("hero-reg-badge");
+        if (regOpen) {
+          heroBadge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-600 text-white text-xs font-bold";
+          heroBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-white"></span> PENDAFTARAN DIBUKA';
+        } else {
+          heroBadge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-bold";
+          heroBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-white"></span> PENDAFTARAN DITUTUP';
+        }
+
+        // Quota stats
+        const q = res.data.quotaStats || {};
+        if (q.futsal) {
+          document.getElementById("quota-futsal-text").textContent = q.futsal.approved + " / " + q.futsal.quota + " Tim";
+          const fBadge = document.getElementById("quota-futsal-badge");
+          if (q.futsal.approved >= q.futsal.quota) {
+            fBadge.textContent = "Penuh";
+            fBadge.className = "px-2.5 py-1 rounded-lg bg-rose-600 text-white text-xs font-bold";
+          } else {
+            fBadge.textContent = "Sisa " + (q.futsal.quota - q.futsal.approved);
+            fBadge.className = "px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold";
+          }
+        }
+        if (q.badminton) {
+          document.getElementById("quota-badminton-text").textContent = q.badminton.approved + " Peserta";
+        }
+        if (q.hadroh) {
+          document.getElementById("quota-hadroh-text").textContent = q.hadroh.approved + " / " + q.hadroh.quota + " Grup";
+          const hBadge = document.getElementById("quota-hadroh-badge");
+          if (q.hadroh.approved >= q.hadroh.quota) {
+            hBadge.textContent = "Penuh";
+            hBadge.className = "px-2.5 py-1 rounded-lg bg-rose-600 text-white text-xs font-bold";
+          } else {
+            hBadge.textContent = "Sisa " + (q.hadroh.quota - q.hadroh.approved);
+            hBadge.className = "px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold";
+          }
+        }
+
+        // Populate Badminton categories in Register & Draw dropdowns
+        const bdmCats = res.data.badmintonCategories || [];
+        const regBdmSel = document.getElementById("reg-bdm-kategori");
+        const drawBdmSel = document.getElementById("draw-kategori-id");
+        if (regBdmSel) {
+          regBdmSel.innerHTML = bdmCats.map(function(c) {
+            return '<option value="' + escapeHtml(c.kategori_id) + '" data-tipe="' + escapeHtml(c.tipe_pemain) + '">' + escapeHtml(c.nama_kategori) + ' (' + escapeHtml(c.tipe_pemain) + ')</option>';
+          }).join("");
+          onBadmintonCategoryChange();
+        }
+        if (drawBdmSel) {
+          drawBdmSel.innerHTML = bdmCats.map(function(c) {
+            return '<option value="' + escapeHtml(c.kategori_id) + '">' + escapeHtml(c.nama_kategori) + '</option>';
+          }).join("");
+        }
+
+        // Render Regulations
+        const regs = res.data.regulations || [];
+        const regListEl = document.getElementById("public-regulations-list");
+        regListEl.innerHTML = regs.length === 0
+          ? '<p class="text-slate-400">Belum ada dokumen regulasi dipublikasikan.</p>'
+          : regs.map(function(r) {
+              return '<div class="p-3 rounded-xl bg-slate-50 border border-slate-200">' +
+                '<div class="flex items-center justify-between gap-2">' +
+                '<span class="font-bold text-slate-900">' + escapeHtml(r.judul) + '</span>' +
+                '<span class="px-2 py-0.5 rounded bg-slate-800 text-white text-[10px] font-bold">' + escapeHtml(r.cabang) + '</span>' +
+                '</div>' +
+                '<p class="text-slate-600 mt-1">' + escapeHtml(r.isi_ringkas) + '</p>' +
+                (r.dokumen_url ? '<a href="' + escapeHtml(r.dokumen_url) + '" target="_blank" class="inline-block mt-1.5 text-amber-700 font-bold hover:underline">Unduh Juknis PDF &rarr;</a>' : '') +
+                '</div>';
+            }).join("");
+
+        // Render Venues
+        const venues = res.data.venues || [];
+        const venueListEl = document.getElementById("public-venues-list");
+        venueListEl.innerHTML = venues.length === 0
+          ? '<p class="text-slate-400">Informasi lokasi arena akan segera diperbarui.</p>'
+          : venues.map(function(v) {
+              return '<div class="p-3 rounded-xl bg-slate-50 border border-slate-200">' +
+                '<div class="flex items-center justify-between">' +
+                '<span class="font-bold text-slate-900">' + escapeHtml(v.nama_venue) + '</span>' +
+                '<span class="px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-bold">' + escapeHtml(v.cabang) + '</span>' +
+                '</div>' +
+                '<p class="text-slate-600 mt-1">' + escapeHtml(v.lokasi_detail || "") + '</p>' +
+                '</div>';
+            }).join("");
+      } catch (e) {
+        console.error("Bootstrap error:", e);
+      }
+    }
+
+    async function loadPublicPortalData() {
+      try {
+        const res = await apiGet("getPublicPortalData", {});
+        if (!res.success || !res.data) return;
+        APP_STATE.portalData = res.data;
+        renderPublicPortalViews();
+      } catch (e) {
+        console.error("Portal data error:", e);
+      }
+    }
+
+    function renderPublicPortalViews() {
+      const data = APP_STATE.portalData;
+      if (!data) return;
+
+      // 1. Announcements
+      const annBox = document.getElementById("public-announcements-box");
+      const annList = document.getElementById("public-announcements-list");
+      if (data.announcements && data.announcements.length > 0) {
+        annBox.classList.remove("hidden");
+        annList.innerHTML = data.announcements.map(function(a) {
+          return '<div class="bg-white border border-amber-200 rounded-xl p-3.5 shadow-xs">' +
+            '<div class="flex items-center justify-between gap-2">' +
+            '<h4 class="font-extrabold text-slate-900 text-xs sm:text-sm">' + escapeHtml(a.judul) + '</h4>' +
+            '<span class="px-2 py-0.5 rounded bg-amber-600 text-white text-[10px] font-bold">' + escapeHtml(a.kategori || "INFO") + '</span>' +
+            '</div>' +
+            '<p class="text-xs text-slate-600 mt-1">' + escapeHtml(a.ringkasan) + '</p>' +
+            '</div>';
+        }).join("");
+      } else {
+        annBox.classList.add("hidden");
+      }
+
+      // 2. Hall of Champions
+      const champSec = document.getElementById("public-champions-section");
+      const champGrid = document.getElementById("public-champions-grid");
+      if (data.champions && data.champions.length > 0) {
+        champSec.classList.remove("hidden");
+        champGrid.innerHTML = data.champions.map(function(c) {
+          return '<div class="rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-4">' +
+            '<div class="flex items-center justify-between">' +
+            '<span class="px-2.5 py-0.5 rounded-full bg-amber-600 text-white text-[11px] font-extrabold">' + escapeHtml(c.label_juara) + '</span>' +
+            '<span class="text-[11px] font-bold text-slate-500">' + escapeHtml(c.cabang + (c.nama_kategori ? " • " + c.nama_kategori : "")) + '</span>' +
+            '</div>' +
+            '<h4 class="font-extrabold text-slate-900 text-sm mt-2">' + escapeHtml(c.nama_pemenang) + '</h4>' +
+            '<p class="text-xs text-slate-600">' + escapeHtml(c.nama_sekolah) + '</p>' +
+            '</div>';
+        }).join("");
+      } else {
+        champSec.classList.add("hidden");
+      }
+
+      // 3. Schedules
+      const branchFilter = document.getElementById("pub-schedule-branch-filter").value;
+      const statusFilter = document.getElementById("pub-schedule-status-filter").value;
+      const filteredSchedules = (data.schedules || []).filter(function(m) {
+        if (branchFilter !== "ALL" && m.cabang !== branchFilter) return false;
+        if (statusFilter !== "ALL" && m.status !== statusFilter) return false;
+        return true;
+      });
+
+      const schedGrid = document.getElementById("public-schedules-grid");
+      if (filteredSchedules.length === 0) {
+        schedGrid.innerHTML = '<div class="col-span-full text-center py-8 text-xs text-slate-400">Belum ada jadwal pertandingan yang sesuai filter.</div>';
+      } else {
+        schedGrid.innerHTML = filteredSchedules.map(function(m) {
+          const isLive = m.status === "LIVE";
+          const isFin = m.status === "FINISHED";
+          const badgeClass = isLive ? "bg-rose-600 text-white" : (isFin ? "bg-emerald-600 text-white" : "bg-slate-700 text-white");
+          return '<div class="border ' + (isLive ? 'border-rose-400 ring-2 ring-rose-100' : 'border-slate-200') + ' rounded-xl p-4 bg-slate-50/60 space-y-3">' +
+            '<div class="flex items-center justify-between text-[11px]">' +
+            '<span class="font-mono font-bold text-slate-500">' + escapeHtml(m.kode_pertandingan || m.cabang) + ' • ' + escapeHtml(m.nama_grup || m.tahap) + '</span>' +
+            '<span class="px-2 py-0.5 rounded-full font-extrabold ' + badgeClass + '">' + escapeHtml(m.status) + '</span>' +
+            '</div>' +
+            '<div class="space-y-1.5 text-xs">' +
+            '<div class="flex items-center justify-between font-bold text-slate-900">' +
+            '<span class="truncate pr-2">' + escapeHtml(m.nama_entitas_a) + '</span>' +
+            '<span class="font-mono text-sm px-2 py-0.5 rounded bg-white border border-slate-200">' + (m.skor_a !== "" ? escapeHtml(m.skor_a) : "-") + '</span>' +
+            '</div>' +
+            '<div class="flex items-center justify-between font-bold text-slate-900">' +
+            '<span class="truncate pr-2">' + escapeHtml(m.nama_entitas_b) + '</span>' +
+            '<span class="font-mono text-sm px-2 py-0.5 rounded bg-white border border-slate-200">' + (m.skor_b !== "" ? escapeHtml(m.skor_b) : "-") + '</span>' +
+            '</div>' +
+            '</div>' +
+            '<div class="pt-2 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">' +
+            '<span>' + escapeHtml(m.tanggal || "-") + ' • ' + escapeHtml(m.jam_mulai || "-") + ' WIB</span>' +
+            '<span class="font-semibold text-slate-700">' + escapeHtml(m.lapangan || "-") + '</span>' +
+            '</div>' +
+            '</div>';
+        }).join("");
+      }
+
+      // 4. Standings
+      const stBranch = document.getElementById("pub-standing-branch-filter").value;
+      const groups = (data.standingsGroups || []).filter(function(g) {
+        return stBranch === "ALL" || g.cabang === stBranch;
+      });
+      const stContainer = document.getElementById("public-standings-container");
+      if (groups.length === 0) {
+        stContainer.innerHTML = '<p class="text-xs text-slate-400 py-6 text-center">Belum ada klasemen grup yang tersedia.</p>';
+      } else {
+        stContainer.innerHTML = groups.map(function(grp) {
+          const rowsHtml = (grp.rows || []).map(function(r, idx) {
+            return '<tr class="border-b border-slate-100 hover:bg-slate-50">' +
+              '<td class="py-2 px-2.5 font-bold text-slate-700">' + (idx + 1) + '</td>' +
+              '<td class="py-2 px-2.5 font-bold text-slate-900">' + escapeHtml(r.nama_entitas) + '</td>' +
+              '<td class="py-2 px-2 text-center">' + r.main + '</td>' +
+              '<td class="py-2 px-2 text-center text-emerald-700 font-semibold">' + r.menang + '</td>' +
+              '<td class="py-2 px-2 text-center">' + r.seri + '</td>' +
+              '<td class="py-2 px-2 text-center text-rose-600">' + r.kalah + '</td>' +
+              '<td class="py-2 px-2 text-center font-mono">' + (grp.cabang === "BADMINTON" ? r.selisih_set : r.selisih_skor) + '</td>' +
+              '<td class="py-2 px-2.5 text-center font-extrabold text-[#0A192F]">' + r.poin + '</td>' +
+              '</tr>';
+          }).join("");
+
+          return '<div class="border border-slate-200 rounded-xl overflow-hidden">' +
+            '<div class="bg-[#0A192F] text-white px-3.5 py-2 flex items-center justify-between text-xs font-bold">' +
+            '<span>' + escapeHtml(grp.cabang + (grp.nama_kategori ? " — " + grp.nama_kategori : "") + " • " + grp.nama_grup) + '</span>' +
+            '</div>' +
+            '<div class="overflow-x-auto">' +
+            '<table class="w-full text-left border-collapse text-xs">' +
+            '<thead><tr class="bg-slate-100 text-slate-600 text-[11px] uppercase">' +
+            '<th class="py-2 px-2.5">#</th><th class="py-2 px-2.5">Kontingen</th><th class="py-2 px-2 text-center">M</th>' +
+            '<th class="py-2 px-2 text-center">W</th><th class="py-2 px-2 text-center">D</th><th class="py-2 px-2 text-center">L</th>' +
+            '<th class="py-2 px-2 text-center">+/-</th><th class="py-2 px-2.5 text-center">Poin</th>' +
+            '</tr></thead>' +
+            '<tbody>' + rowsHtml + '</tbody>' +
+            '</table></div></div>';
+        }).join("");
+      }
+
+      // 5. Hadroh Box
+      const hadrohBadge = document.getElementById("pub-hadroh-status-badge");
+      const hadrohBox = document.getElementById("public-hadroh-box");
+      if (data.hadrohPublished && data.hadrohStandings && data.hadrohStandings.length > 0) {
+        hadrohBadge.textContent = "Hasil Resmi";
+        hadrohBadge.className = "px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-[11px] font-bold";
+        hadrohBox.innerHTML = data.hadrohStandings.map(function(h, idx) {
+          return '<div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200">' +
+            '<div><span class="font-extrabold text-[#0A192F]">#' + (idx + 1) + ' ' + escapeHtml(h.nama_grup) + '</span>' +
+            '<span class="block text-[11px] text-slate-500">' + escapeHtml(h.nama_sekolah) + '</span></div>' +
+            '<span class="px-2.5 py-1 rounded-lg bg-[#0A192F] text-white font-mono font-extrabold">' + h.nilai_akhir + '</span>' +
+            '</div>';
+        }).join("");
+      } else {
+        const hadrohParticipants = (data.approvedParticipants || []).filter(function(p) { return p.cabang === "HADROH"; });
+        hadrohBadge.textContent = hadrohParticipants.length + " Grup";
+        hadrohBadge.className = "px-2.5 py-0.5 rounded-full bg-slate-700 text-white text-[11px] font-bold";
+        hadrohBox.innerHTML = hadrohParticipants.length === 0
+          ? '<p class="text-slate-400">Belum ada grup Hadroh terverifikasi.</p>'
+          : hadrohParticipants.map(function(h, idx) {
+              return '<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100">' +
+                '<span class="font-bold text-slate-800">' + (idx + 1) + '. ' + escapeHtml(h.nama_tim_atau_peserta) + '</span>' +
+                '<span class="text-[11px] text-slate-500">' + escapeHtml(h.nama_sekolah) + '</span>' +
+                '</div>';
+            }).join("");
+      }
+
+      // 6. Approved Participants List
+      renderPublicParticipantsList();
+    }
+
+    function renderPublicParticipantsList() {
+      const data = APP_STATE.portalData;
+      if (!data) return;
+      const all = data.approvedParticipants || [];
+      document.getElementById("pub-approved-count-badge").textContent = all.length + " Kontingen";
+
+      const keyword = (document.getElementById("pub-participant-search").value || "").toLowerCase();
+      const filtered = all.filter(function(p) {
+        return !keyword ||
+          String(p.nama_sekolah).toLowerCase().indexOf(keyword) !== -1 ||
+          String(p.nama_tim_atau_peserta).toLowerCase().indexOf(keyword) !== -1 ||
+          String(p.cabang).toLowerCase().indexOf(keyword) !== -1;
+      });
+
+      const listEl = document.getElementById("public-participants-list");
+      listEl.innerHTML = filtered.length === 0
+        ? '<p class="py-4 text-center text-slate-400">Tidak ada data kontingen cocok.</p>'
+        : filtered.map(function(p) {
+            return '<div class="py-2.5 flex items-center justify-between gap-2">' +
+              '<div><p class="font-bold text-slate-900">' + escapeHtml(p.nama_tim_atau_peserta) + '</p>' +
+              '<p class="text-[11px] text-slate-500">' + escapeHtml(p.nama_sekolah) + '</p></div>' +
+              '<span class="px-2 py-0.5 rounded bg-slate-800 text-white text-[10px] font-bold">' + escapeHtml(p.cabang) + '</span>' +
+              '</div>';
+          }).join("");
+    }
+
+    /**
+     * ======================================================================
+     * PUBLIC REGISTRATION FORM LOGIC (PHASE 1)
+     * ======================================================================
+     */
+    function initRegistrationDynamicRows() {
+      const futsalBox = document.getElementById("futsal-players-container");
+      if (futsalBox && futsalBox.children.length === 0) {
+        for (let i = 0; i < 5; i++) addFutsalPlayerRow();
+      }
+      const hadrohBox = document.getElementById("hadroh-members-container");
+      if (hadrohBox && hadrohBox.children.length === 0) {
+        for (let j = 0; j < 5; j++) addHadrohMemberRow();
+      }
+    }
+
+    function onRegisterBranchChange() {
+      const selected = document.querySelector('input[name="reg_cabang"]:checked').value;
+      document.getElementById("reg-fields-futsal").classList.toggle("hidden", selected !== "FUTSAL");
+      document.getElementById("reg-fields-badminton").classList.toggle("hidden", selected !== "BADMINTON");
+      document.getElementById("reg-fields-hadroh").classList.toggle("hidden", selected !== "HADROH");
+    }
+
+    function onBadmintonCategoryChange() {
+      const sel = document.getElementById("reg-bdm-kategori");
+      if (!sel || sel.selectedIndex < 0) return;
+      const tipe = sel.options[sel.selectedIndex].getAttribute("data-tipe");
+      const p2Box = document.getElementById("reg-bdm-player2-box");
+      if (tipe === "DOUBLE") {
+        p2Box.classList.remove("hidden");
+        p2Box.classList.add("grid");
+      } else {
+        p2Box.classList.add("hidden");
+        p2Box.classList.remove("grid");
+      }
+    }
+
+    function addFutsalPlayerRow() {
+      const container = document.getElementById("futsal-players-container");
+      const idx = container.children.length + 1;
+      const row = document.createElement("div");
+      row.className = "grid grid-cols-12 gap-2 items-center bg-slate-50 p-2 rounded-xl border border-slate-200 text-xs";
+      row.innerHTML =
+        '<div class="col-span-4"><input type="text" placeholder="Nama Pemain #' + idx + (idx === 1 ? ' (Kapten)' : '') + '" class="fp-nama w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white" /></div>' +
+        '<div class="col-span-2"><input type="number" placeholder="No." value="' + idx + '" class="fp-no w-full px-2 py-1.5 rounded-lg border border-slate-300 bg-white text-center" /></div>' +
+        '<div class="col-span-3"><select class="fp-posisi w-full px-2 py-1.5 rounded-lg border border-slate-300 bg-white">' +
+        '<option value="KIPER">Kiper</option><option value="ANCHOR">Anchor</option><option value="FLANK" selected>Flank</option><option value="PIVOT">Pivot</option></select></div>' +
+        '<div class="col-span-2"><input type="text" placeholder="Kelas" class="fp-kelas w-full px-2 py-1.5 rounded-lg border border-slate-300 bg-white" /></div>' +
+        '<div class="col-span-1 text-right"><button type="button" onclick="this.parentElement.parentElement.remove()" class="text-rose-600 font-bold px-1.5 py-1 hover:bg-rose-50 rounded">&times;</button></div>';
+      container.appendChild(row);
+    }
+
+    function addHadrohMemberRow() {
+      const container = document.getElementById("hadroh-members-container");
+      const idx = container.children.length + 1;
+      const row = document.createElement("div");
+      row.className = "grid grid-cols-12 gap-2 items-center bg-slate-50 p-2 rounded-xl border border-slate-200 text-xs";
+      row.innerHTML =
+        '<div class="col-span-5"><input type="text" placeholder="Nama Personil #' + idx + '" class="hm-nama w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white" /></div>' +
+        '<div class="col-span-4"><select class="hm-peran w-full px-2 py-1.5 rounded-lg border border-slate-300 bg-white">' +
+        '<option value="VOKAL">Vokal Utama</option><option value="TERBANG" selected>Terbang / Rebana</option><option value="BASS">Bass / Habsyi</option><option value="DARBUKA">Darbuka</option><option value="TAMBOURINE">Keprak / Tambourine</option></select></div>' +
+        '<div class="col-span-2"><input type="text" placeholder="Kelas" class="hm-kelas w-full px-2 py-1.5 rounded-lg border border-slate-300 bg-white" /></div>' +
+        '<div class="col-span-1 text-right"><button type="button" onclick="this.parentElement.parentElement.remove()" class="text-rose-600 font-bold px-1.5 py-1 hover:bg-rose-50 rounded">&times;</button></div>';
+      container.appendChild(row);
+    }
+
+    async function submitPublicRegistration(event) {
+      event.preventDefault();
+      const btn = document.getElementById("btn-submit-register");
+      btn.disabled = true;
+      btn.textContent = "Mengirim Pendaftaran...";
+
+      try {
+        const cabang = document.querySelector('input[name="reg_cabang"]:checked').value;
+        const payload = {
+          cabang: cabang,
+          nama_sekolah: document.getElementById("reg-nama-sekolah").value.trim(),
+          npsn: document.getElementById("reg-npsn").value.trim(),
+          kabupaten_kota: document.getElementById("reg-kabupaten").value.trim(),
+          alamat_sekolah: document.getElementById("reg-alamat").value.trim(),
+          nama_pembina: document.getElementById("reg-nama-pembina").value.trim(),
+          no_wa_pembina: document.getElementById("reg-wa-pembina").value.trim(),
+          email_pembina: document.getElementById("reg-email-pembina").value.trim()
+        };
+
+        if (cabang === "FUTSAL") {
+          payload.nama_tim = document.getElementById("reg-futsal-nama-tim").value.trim();
+          payload.pelatih = document.getElementById("reg-futsal-pelatih").value.trim();
+          payload.warna_jersey = document.getElementById("reg-futsal-jersey").value.trim();
+          const players = [];
+          document.querySelectorAll("#futsal-players-container > div").forEach(function(row, idx) {
+            const nama = row.querySelector(".fp-nama").value.trim();
+            if (nama) {
+              players.push({
+                nama_pemain: nama,
+                nomor_punggung: row.querySelector(".fp-no").value || String(idx + 1),
+                posisi: row.querySelector(".fp-posisi").value,
+                kelas: row.querySelector(".fp-kelas").value.trim(),
+                is_kapten: idx === 0
+              });
+            }
+          });
+          payload.players = players;
+        } else if (cabang === "BADMINTON") {
+          payload.kategori_id = document.getElementById("reg-bdm-kategori").value;
+          payload.nama_pemain_1 = document.getElementById("reg-bdm-p1-nama").value.trim();
+          payload.nisn_1 = document.getElementById("reg-bdm-p1-nisn").value.trim();
+          payload.kelas_1 = document.getElementById("reg-bdm-p1-kelas").value.trim();
+          payload.nama_pemain_2 = document.getElementById("reg-bdm-p2-nama").value.trim();
+          payload.nisn_2 = document.getElementById("reg-bdm-p2-nisn").value.trim();
+          payload.kelas_2 = document.getElementById("reg-bdm-p2-kelas").value.trim();
+        } else if (cabang === "HADROH") {
+          payload.nama_grup = document.getElementById("reg-hadroh-nama-grup").value.trim();
+          payload.official_grup = document.getElementById("reg-hadroh-official").value.trim();
+          payload.lagu_wajib = document.getElementById("reg-hadroh-lagu-wajib").value.trim();
+          payload.lagu_pilihan = document.getElementById("reg-hadroh-lagu-pilihan").value.trim();
+          const members = [];
+          document.querySelectorAll("#hadroh-members-container > div").forEach(function(row) {
+            const nama = row.querySelector(".hm-nama").value.trim();
+            if (nama) {
+              members.push({
+                nama_anggota: nama,
+                peran_alat: row.querySelector(".hm-peran").value,
+                kelas: row.querySelector(".hm-kelas").value.trim()
+              });
+            }
+          });
+          payload.members = members;
+        }
+
+        const res = await apiPost("registerParticipant", payload);
+        if (!res.success) {
+          showToast(res.message || "Gagal memproses pendaftaran.", "error");
+          return;
+        }
+
+        showToast(res.message, "success");
+        const receiptCard = document.getElementById("registration-receipt-card");
+        receiptCard.classList.remove("hidden");
+        document.getElementById("receipt-no-reg").textContent = res.data.no_registrasi;
+        document.getElementById("receipt-summary").textContent =
+          res.data.cabang + " — " + res.data.nama_tim_atau_peserta + " (" + res.data.nama_sekolah + ")";
+        receiptCard.scrollIntoView({ behavior: "smooth" });
+        triggerManualSyncPulse(false);
+      } catch (err) {
+        showToast("Terjadi kesalahan jaringan saat mendaftar.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Kirim Pendaftaran Kontingen';
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    function copyReceiptNumber() {
+      const code = document.getElementById("receipt-no-reg").textContent;
+      navigator.clipboard.writeText(code);
+      showToast("Nomor registrasi " + code + " berhasil disalin!", "success");
+    }
+
+    /**
+     * ======================================================================
+     * CHECK STATUS & E-PASS QR CODE (PHASE 1 & 6)
+     * ======================================================================
+     */
+    async function checkPublicRegStatus(event) {
+      event.preventDefault();
+      const noReg = document.getElementById("status-search-input").value.trim().toUpperCase();
+      if (!noReg) return;
+
+      try {
+        const res = await apiGet("checkRegistrationStatus", { no_registrasi: noReg });
+        if (!res.success || !res.data) {
+          showToast(res.message || "Nomor registrasi tidak ditemukan.", "error");
+          document.getElementById("status-result-box").classList.add("hidden");
+          return;
+        }
+
+        const d = res.data;
+        document.getElementById("status-result-box").classList.remove("hidden");
+        document.getElementById("st-res-noreg").textContent = d.no_registrasi;
+        document.getElementById("st-res-school").textContent = d.nama_sekolah;
+        document.getElementById("st-res-branch").textContent = d.cabang + (d.nama_kategori ? " — " + d.nama_kategori : "");
+        document.getElementById("st-res-entity").textContent = d.nama_tim_atau_peserta;
+        document.getElementById("st-res-coach").textContent = d.nama_pembina;
+        document.getElementById("st-res-notes").textContent = d.catatan_verifikasi || "-";
+
+        const badge = document.getElementById("st-res-badge");
+        badge.textContent = d.status;
+        if (d.status === "APPROVED") {
+          badge.className = "px-3 py-1 rounded-full text-xs font-extrabold text-white bg-emerald-600";
+        } else if (d.status === "REJECTED") {
+          badge.className = "px-3 py-1 rounded-full text-xs font-extrabold text-white bg-rose-600";
+        } else {
+          badge.className = "px-3 py-1 rounded-full text-xs font-extrabold text-white bg-amber-600";
+        }
+
+        const qrWrap = document.getElementById("st-res-qr-wrapper");
+        const qrContainer = document.getElementById("st-res-qrcode");
+        qrContainer.innerHTML = "";
+
+        if (d.status === "APPROVED" && d.qr_token) {
+          qrWrap.classList.remove("hidden");
+          document.getElementById("st-res-qrtoken").textContent = d.qr_token;
+          new QRCode(qrContainer, {
+            text: d.qr_token,
+            width: 170,
+            height: 170,
+            colorDark: "#0A192F",
+            colorLight: "#ffffff"
+          });
+        } else {
+          qrWrap.classList.add("hidden");
+        }
+      } catch (e) {
+        showToast("Gagal memeriksa status pendaftaran.", "error");
+      }
+    }
+
+    /**
+     * ======================================================================
+     * PUBLIC GALLERY & CERTIFICATE VERIFICATION (PHASE 7)
+     * ======================================================================
+     */
+    async function loadPublicGalleryData() {
+      try {
+        const res = await apiGet("getPublicGalleryData", {});
+        if (!res.success || !res.data) return;
+        APP_STATE.galleryItems = res.data.items || [];
+        renderPublicGallery();
+      } catch (e) {
+        console.error("Gallery load error:", e);
+      }
+    }
+
+    function renderPublicGallery() {
+      const filter = document.getElementById("pub-gallery-filter").value;
+      const items = APP_STATE.galleryItems.filter(function(item) {
+        return filter === "ALL" || item.kategori === filter;
+      });
+
+      const grid = document.getElementById("public-gallery-grid");
+      if (items.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-12 text-xs text-slate-400">Belum ada dokumentasi pada kategori ini.</div>';
+        return;
+      }
+
+      grid.innerHTML = items.map(function(item) {
+        return '<div onclick="openGalleryLightbox(\'' + escapeJsAttr(item.media_url) + '\', \'' + escapeJsAttr(item.judul) + '\', \'' + escapeJsAttr(item.deskripsi || item.album) + '\')" ' +
+          'class="cursor-pointer group bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition">' +
+          '<div class="aspect-video bg-slate-100 overflow-hidden relative">' +
+          '<img src="' + escapeHtml(item.thumbnail_url || item.media_url) + '" alt="' + escapeHtml(item.judul) + '" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy" />' +
+          '<span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-[#0A192F]/90 text-white text-[10px] font-bold">' + escapeHtml(item.kategori) + '</span>' +
+          '</div>' +
+          '<div class="p-4">' +
+          '<h4 class="font-extrabold text-slate-900 text-sm line-clamp-1">' + escapeHtml(item.judul) + '</h4>' +
+          '<p class="text-xs text-slate-500 mt-0.5">' + escapeHtml(item.album) + ' • ' + escapeHtml(item.tanggal_kegiatan || "") + '</p>' +
+          '</div></div>';
+      }).join("");
+    }
+
+    function openGalleryLightbox(url, title, desc) {
+      document.getElementById("lightbox-img").src = url;
+      document.getElementById("lightbox-title").textContent = title;
+      document.getElementById("lightbox-desc").textContent = desc || "";
+      document.getElementById("gallery-lightbox-modal").classList.remove("hidden");
+    }
+
+    function closeGalleryLightbox() {
+      document.getElementById("gallery-lightbox-modal").classList.add("hidden");
+    }
+
+    async function verifyPublicCertificate(event) {
+      event.preventDefault();
+      const query = document.getElementById("cert-verify-input").value.trim().toUpperCase();
+      if (!query) return;
+
+      try {
+        const res = await apiGet("verifyCertificate", { query: query });
+        const box = document.getElementById("cert-verify-result");
+        if (!res.success || !res.data) {
+          box.classList.add("hidden");
+          showToast(res.message || "Sertifikat tidak ditemukan.", "error");
+          return;
+        }
+
+        const d = res.data;
+        box.classList.remove("hidden");
+        document.getElementById("cert-res-date").textContent = "Terbit: " + (d.tanggal_terbit || "-");
+        document.getElementById("cert-res-number").textContent = d.nomor_sertifikat;
+        document.getElementById("cert-res-code").textContent = d.kode_verifikasi;
+        document.getElementById("cert-res-recipient").textContent = d.nama_penerima;
+        document.getElementById("cert-res-school").textContent = d.nama_sekolah;
+        document.getElementById("cert-res-achievement").textContent = d.pencapaian;
+        document.getElementById("cert-res-branch").textContent = d.cabang + (d.kategori ? " (" + d.kategori + ")" : "");
+
+        const pdfBox = document.getElementById("cert-res-pdf-box");
+        const pdfLink = document.getElementById("cert-res-pdf-link");
+        if (d.pdf_url) {
+          pdfBox.classList.remove("hidden");
+          pdfLink.href = d.pdf_url;
+        } else {
+          pdfBox.classList.add("hidden");
+        }
+      } catch (e) {
+        showToast("Gagal memverifikasi sertifikat.", "error");
+      }
+    }
+
+    /**
+     * ======================================================================
+     * FULL-SCREEN TOURNAMENT DISPLAY BOARD (PHASE 6)
+     * ======================================================================
+     */
+    function openDisplayBoardMode() {
+      APP_STATE.currentMode = "DISPLAY";
+      document.getElementById("display-board-overlay").classList.remove("hidden");
+      loadDisplayBoardData();
+
+      if (APP_STATE.displayClockTimerId) clearInterval(APP_STATE.displayClockTimerId);
+      APP_STATE.displayClockTimerId = setInterval(function() {
+        const now = new Date();
+        document.getElementById("disp-clock").textContent = now.toLocaleTimeString("id-ID", { hour12: false }) + " WIB";
+      }, 1000);
+    }
+
+    function closeDisplayBoardMode() {
+      document.getElementById("display-board-overlay").classList.add("hidden");
+      if (APP_STATE.displayClockTimerId) clearInterval(APP_STATE.displayClockTimerId);
+      APP_STATE.currentMode = APP_STATE.adminProfile && !document.getElementById("admin-workspace-wrapper").classList.contains("hidden")
+        ? "ADMIN"
+        : "PUBLIC";
+    }
+
+    async function loadDisplayBoardData() {
+      try {
+        const res = await apiGet("getDisplayBoardData", {});
+        if (!res.success || !res.data) return;
+        const d = res.data;
+
+        const live = d.liveMatches || [];
+        document.getElementById("disp-live-count").textContent = live.length + " Match";
+        document.getElementById("disp-live-matches").innerHTML = live.length === 0
+          ? '<p class="text-xs text-slate-400 py-4 text-center">Belum ada pertandingan berstatus LIVE saat ini.</p>'
+          : live.map(function(m) {
+              return '<div class="p-3.5 rounded-xl bg-slate-900 border border-rose-500/60 space-y-2">' +
+                '<div class="flex justify-between text-[11px] text-rose-300 font-bold">' +
+                '<span>' + escapeHtml(m.cabang + " • " + (m.nama_grup || m.tahap)) + '</span>' +
+                '<span>' + escapeHtml(m.lapangan || "-") + '</span></div>' +
+                '<div class="flex justify-between items-center text-sm font-extrabold">' +
+                '<span class="truncate pr-2">' + escapeHtml(m.nama_entitas_a) + '</span>' +
+                '<span class="px-2.5 py-0.5 rounded bg-rose-600 text-white font-mono">' + (m.skor_a !== "" ? m.skor_a : 0) + '</span></div>' +
+                '<div class="flex justify-between items-center text-sm font-extrabold">' +
+                '<span class="truncate pr-2">' + escapeHtml(m.nama_entitas_b) + '</span>' +
+                '<span class="px-2.5 py-0.5 rounded bg-rose-600 text-white font-mono">' + (m.skor_b !== "" ? m.skor_b : 0) + '</span></div>' +
+                '</div>';
+            }).join("");
+
+        const up = d.upcomingMatches || [];
+        document.getElementById("disp-upcoming-matches").innerHTML = up.length === 0
+          ? '<p class="text-slate-400">Tidak ada jadwal berikutnya.</p>'
+          : up.map(function(m) {
+              return '<div class="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between gap-2">' +
+                '<div class="truncate"><span class="text-sky-400 font-bold">[' + escapeHtml(m.cabang) + ']</span> ' +
+                '<span class="font-semibold">' + escapeHtml(m.nama_entitas_a) + ' vs ' + escapeHtml(m.nama_entitas_b) + '</span></div>' +
+                '<span class="font-mono text-[#D4AF37] whitespace-nowrap">' + escapeHtml(m.jam_mulai || "-") + '</span>' +
+                '</div>';
+            }).join("");
+
+        const grps = (d.standingsGroups || []).slice(0, 4);
+        document.getElementById("disp-standings-grid").innerHTML = grps.length === 0
+          ? '<p class="text-slate-400 col-span-full">Klasemen grup belum tersedia.</p>'
+          : grps.map(function(g) {
+              const rows = (g.rows || []).slice(0, 4).map(function(r, i) {
+                return '<div class="flex justify-between py-1 border-b border-slate-800/80">' +
+                  '<span class="truncate pr-2">' + (i + 1) + '. ' + escapeHtml(r.nama_entitas) + '</span>' +
+                  '<span class="font-mono font-bold text-emerald-400">' + r.poin + ' pts</span></div>';
+              }).join("");
+              return '<div class="p-3 rounded-xl bg-slate-900 border border-slate-800">' +
+                '<div class="font-extrabold text-[#D4AF37] mb-1.5">' + escapeHtml(g.cabang + " • " + g.nama_grup) + '</div>' +
+                rows + '</div>';
+            }).join("");
+
+        const hadrohItems = d.hadrohPublished && d.hadrohStandings && d.hadrohStandings.length > 0
+          ? d.hadrohStandings.slice(0, 6).map(function(h, i) {
+              return '<div class="flex justify-between py-1 border-b border-slate-800">' +
+                '<span class="truncate pr-2">#' + (i + 1) + ' ' + escapeHtml(h.nama_grup) + '</span>' +
+                '<span class="font-mono font-bold text-amber-400">' + h.nilai_akhir + '</span></div>';
+            }).join("")
+          : (d.hadrohQueue || []).slice(0, 6).map(function(h) {
+              return '<div class="flex justify-between py-1 border-b border-slate-800">' +
+                '<span class="truncate pr-2">Urut #' + escapeHtml(h.nomor_urut_tampil) + ' — ' + escapeHtml(h.nama_grup) + '</span>' +
+                '<span class="text-slate-400 truncate max-w-[110px]">' + escapeHtml(h.nama_sekolah) + '</span></div>';
+            }).join("");
+        document.getElementById("disp-hadroh-list").innerHTML = hadrohItems || '<p class="text-slate-400">Belum ada data Hadroh.</p>';
+
+        const chk = d.checkinSummary || { checkedInCount: 0, approvedCount: 0 };
+        document.getElementById("disp-checkin-stat").textContent =
+          "Kehadiran Kontingen Arena: " + chk.checkedInCount + " dari " + chk.approvedCount + " Kontingen Terverifikasi";
+
+        document.getElementById("disp-announcements-list").innerHTML = (d.announcements || []).slice(0, 3).map(function(a) {
+          return '<div class="p-2 rounded-lg bg-slate-900 border border-purple-500/40">' +
+            '<p class="font-bold text-purple-200">' + escapeHtml(a.judul) + '</p>' +
+            '<p class="text-[11px] text-slate-300 mt-0.5">' + escapeHtml(a.ringkasan) + '</p></div>';
+        }).join("");
+      } catch (e) {
+        console.error("Display board error:", e);
+      }
+    }
+
+    /**
+     * ======================================================================
+     * ADMIN AUTHENTICATION & SESSION MANAGEMENT (PHASE 2)
+     * ======================================================================
+     */
+    async function restoreAdminSessionOnBoot() {
+      if (!APP_STATE.adminToken) return;
+      try {
+        const res = await apiPost("verifyAdminSession", {});
+        if (res.success && res.data && res.data.profile) {
+          APP_STATE.adminProfile = res.data.profile;
+          document.getElementById("btn-nav-admin-text").textContent = "Workspace (" + res.data.profile.role_code + ")";
+        } else {
+          clearAdminSessionLocal();
+        }
+      } catch (e) {
+        // Abaikan jika offline sementara
+      }
+    }
+
+    async function submitAdminLogin(event) {
+      event.preventDefault();
+      const btn = document.getElementById("btn-submit-login");
+      const errBox = document.getElementById("login-error-box");
+      errBox.classList.add("hidden");
+      btn.disabled = true;
+      btn.textContent = "Memverifikasi Akun...";
+
+      try {
+        const username = document.getElementById("login-username").value.trim();
+        const password = document.getElementById("login-password").value;
+        const res = await apiPost("adminLogin", { username: username, password: password });
+
+        if (!res.success || !res.data) {
+          errBox.textContent = res.message || "Username atau password salah.";
+          errBox.classList.remove("hidden");
+          return;
+        }
+
+        APP_STATE.adminToken = res.data.token;
+        APP_STATE.adminProfile = res.data.profile;
+        localStorage.setItem("boash_admin_token", res.data.token);
+
+        closeAdminLoginModal();
+        showToast("Selamat datang, " + res.data.profile.nama_lengkap + "!", "success");
+        enterAdminWorkspace();
+      } catch (e) {
+        errBox.textContent = "Gagal terhubung ke server autentikasi.";
+        errBox.classList.remove("hidden");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Masuk ke Workspace Panitia";
+      }
+    }
+
+    async function logoutAdminSession() {
+      try {
+        await apiPost("adminLogout", {});
+      } catch (e) {}
+      clearAdminSessionLocal();
+      showToast("Anda telah keluar dari Panel Panitia.", "info");
+      switchPublicTab("home");
+    }
+
+    function clearAdminSessionLocal() {
+      stopQrCameraScanner();
+      APP_STATE.adminToken = "";
+      APP_STATE.adminProfile = null;
+      localStorage.removeItem("boash_admin_token");
+      document.getElementById("btn-nav-admin-text").textContent = "Panel Panitia";
+    }
+
+    /**
+     * ======================================================================
+     * ADMIN TAB 1 & 2: OVERVIEW & VERIFIKASI PENDAFTARAN (PHASE 2)
+     * ======================================================================
+     */
+    async function loadAdminOverview() {
+      const res = await apiPost("getAdminDashboardOverview", {});
+      if (!res.success || !res.data) return;
+
+      const s = res.data.stats || {};
+      document.getElementById("ov-stat-total-reg").textContent = s.totalRegistrations || 0;
+      document.getElementById("ov-stat-pending-reg").textContent = (s.pendingRegistrations || 0) + " Pending";
+      document.getElementById("ov-stat-approved-reg").textContent = s.approvedRegistrations || 0;
+      document.getElementById("ov-stat-schools").textContent = (s.totalSchools || 0) + " Sekolah";
+      document.getElementById("ov-stat-checkin").textContent = s.totalCheckins || 0;
+      document.getElementById("ov-stat-matches").textContent = (s.totalMatches || 0) + " Match";
+      document.getElementById("ov-stat-certs").textContent = (s.totalCertificates || 0) + " Sertifikat";
+
+      const br = res.data.branchStats || {};
+      document.getElementById("ov-branch-breakdown").innerHTML = ["FUTSAL", "BADMINTON", "HADROH"].map(function(c) {
+        const b = br[c] || { total: 0, approved: 0, pending: 0 };
+        return '<div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">' +
+          '<div><span class="font-extrabold text-slate-900">' + c + '</span>' +
+          '<span class="block text-[11px] text-slate-500">Total Pendaftar: ' + b.total + '</span></div>' +
+          '<div class="flex gap-1.5">' +
+          '<span class="px-2 py-0.5 rounded bg-emerald-600 text-white font-bold">' + b.approved + ' Approved</span>' +
+          '<span class="px-2 py-0.5 rounded bg-amber-600 text-white font-bold">' + b.pending + ' Pending</span>' +
+          '</div></div>';
+      }).join("");
+
+      const logs = res.data.recentLogs || [];
+      document.getElementById("ov-audit-logs").innerHTML = logs.length === 0
+        ? '<p class="text-slate-400 py-4">Belum ada log aktivitas.</p>'
+        : logs.map(function(l) {
+            return '<div class="py-2 flex items-center justify-between gap-2">' +
+              '<div><span class="font-bold text-slate-800">' + escapeHtml(l.action) + '</span>' +
+              '<span class="text-slate-500 ml-1">(' + escapeHtml(l.target_table) + ')</span></div>' +
+              '<span class="font-mono text-[10px] text-slate-400">' + escapeHtml(String(l.created_at).slice(11, 19)) + '</span>' +
+              '</div>';
+          }).join("");
+    }
+
+    async function loadAdminRegistrations() {
+      const cabang = document.getElementById("adm-reg-branch-filter").value;
+      const status = document.getElementById("adm-reg-status-filter").value;
+      const res = await apiPost("getAdminRegistrations", { cabang: cabang, status: status });
+      if (!res.success || !res.data) return;
+      APP_STATE.adminRegistrationsCache = res.data.registrations || [];
+      renderAdminRegistrationsTable();
+    }
+
+    function renderAdminRegistrationsTable() {
+      const kw = (document.getElementById("adm-reg-search").value || "").toLowerCase();
+      const rows = APP_STATE.adminRegistrationsCache.filter(function(r) {
+        return !kw ||
+          String(r.no_registrasi).toLowerCase().indexOf(kw) !== -1 ||
+          String(r.nama_sekolah).toLowerCase().indexOf(kw) !== -1 ||
+          String(r.nama_tim_atau_peserta).toLowerCase().indexOf(kw) !== -1;
+      });
+
+      const tbody = document.getElementById("adm-registrations-tbody");
+      if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">Tidak ada data pendaftaran sesuai filter.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = rows.map(function(r) {
+        const badgeClass = r.status === "APPROVED"
+          ? "bg-emerald-600 text-white"
+          : (r.status === "REJECTED" ? "bg-rose-600 text-white" : "bg-amber-600 text-white");
+        return '<tr class="hover:bg-slate-50">' +
+          '<td class="py-3 px-3 font-mono font-bold text-slate-900">' + escapeHtml(r.no_registrasi) + '</td>' +
+          '<td class="py-3 px-3"><span class="px-2 py-0.5 rounded bg-slate-800 text-white text-[10px] font-bold">' + escapeHtml(r.cabang) + '</span>' +
+          (r.nama_kategori ? '<span class="block text-[11px] text-slate-500 mt-0.5">' + escapeHtml(r.nama_kategori) + '</span>' : '') + '</td>' +
+          '<td class="py-3 px-3"><strong class="text-slate-900">' + escapeHtml(r.nama_sekolah) + '</strong>' +
+          '<span class="block text-[11px] text-slate-500">' + escapeHtml(r.nama_pembina) + ' (' + escapeHtml(r.no_wa_pembina) + ')</span></td>' +
+          '<td class="py-3 px-3 font-bold text-slate-800">' + escapeHtml(r.nama_tim_atau_peserta) + '</td>' +
+          '<td class="py-3 px-3"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ' + badgeClass + '">' + escapeHtml(r.status) + '</span></td>' +
+          '<td class="py-3 px-3 text-right space-x-1 whitespace-nowrap">' +
+          '<button type="button" onclick="openRegistrationDetailModal(\'' + escapeJsAttr(r.pendaftaran_id) + '\')" class="px-2.5 py-1 rounded-lg bg-[#0A192F] text-white font-bold hover:bg-slate-800">Inspeksi</button>' +
+          '</td></tr>';
+      }).join("");
+    }
+
+    async function openRegistrationDetailModal(pendaftaranId) {
+      const res = await apiPost("getRegistrationDetail", { pendaftaran_id: pendaftaranId });
+      if (!res.success || !res.data) {
+        showToast(res.message || "Gagal memuat detail peserta.", "error");
+        return;
+      }
+
+      const reg = res.data.registration;
+      const sch = res.data.school || {};
+      const roster = res.data.roster || [];
+
+      document.getElementById("modal-reg-branch").textContent = reg.cabang + " • " + reg.status;
+      document.getElementById("modal-reg-title").textContent = reg.nama_tim_atau_peserta + " (" + reg.no_registrasi + ")";
+      document.getElementById("modal-reg-subtitle").textContent = (sch.nama_sekolah || "-") + " — Pembina: " + (sch.nama_pembina || "-") + " (" + (sch.no_wa_pembina || "-") + ")";
+
+      const rosterHtml = roster.length === 0
+        ? '<p class="text-slate-400">Tidak ada rincian anggota.</p>'
+        : roster.map(function(item, i) {
+            return '<div class="flex justify-between py-1.5 border-b border-slate-100">' +
+              '<span class="font-bold text-slate-800">' + (i + 1) + '. ' + escapeHtml(item.nama_pemain || item.nama_anggota || item.nama || "-") + '</span>' +
+              '<span class="text-slate-500">' + escapeHtml(item.posisi || item.peran_alat || item.kelas || "") + '</span></div>';
+          }).join("");
+
+      document.getElementById("modal-reg-body").innerHTML =
+        '<div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1">' +
+        '<p class="font-bold text-slate-800 mb-2">Daftar Atlet / Personil Terdaftar (' + roster.length + '):</p>' +
+        rosterHtml + '</div>' +
+        '<div><label class="block font-bold text-slate-700 mb-1">Catatan Verifikasi Panitia</label>' +
+        '<input type="text" id="modal-verify-notes" value="' + escapeHtml(reg.catatan_verifikasi || "") + '" placeholder="Catatan opsional untuk pembina..." class="w-full px-3 py-2 rounded-xl border border-slate-300" /></div>' +
+        '<div class="flex flex-wrap justify-end gap-2 pt-2">' +
+        '<button type="button" onclick="processVerifyDecision(\'' + escapeJsAttr(reg.pendaftaran_id) + '\', \'REJECTED\')" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold">Tolak Berkas</button>' +
+        '<button type="button" onclick="processVerifyDecision(\'' + escapeJsAttr(reg.pendaftaran_id) + '\', \'APPROVED\')" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold">Setujui & Terbitkan QR</button>' +
+        '</div>';
+
+      document.getElementById("reg-detail-modal").classList.remove("hidden");
+    }
+
+    function closeRegDetailModal() {
+      document.getElementById("reg-detail-modal").classList.add("hidden");
+    }
+
+    async function processVerifyDecision(pendaftaranId, decision) {
+      const notes = document.getElementById("modal-verify-notes").value.trim();
+      const res = await apiPost("verifyRegistration", {
+        pendaftaran_id: pendaftaranId,
+        decision: decision,
+        catatan_verifikasi: notes
+      });
+      if (!res.success) {
+        showToast(res.message || "Gagal memperbarui status pendaftaran.", "error");
+        return;
+      }
+      showToast(res.message, "success");
+      closeRegDetailModal();
+      await loadAdminRegistrations();
+      triggerManualSyncPulse(false);
+    }
+
+    /**
+     * ======================================================================
+     * ADMIN TAB 3: AUTO-DRAW, JADWAL, SKOR & JUARA (PHASE 3 & 4)
+     * ======================================================================
+     */
+    function onDrawBranchChange() {
+      const cb = document.getElementById("draw-cabang").value;
+      document.getElementById("draw-kategori-box").classList.toggle("hidden", cb !== "BADMINTON");
+    }
+
+    async function triggerAutoDrawGroups() {
+      const cabang = document.getElementById("draw-cabang").value;
+      const kategoriId = cabang === "BADMINTON" ? document.getElementById("draw-kategori-id").value : "";
+      const jumlahGrup = parseInt(document.getElementById("draw-num-groups").value || "2", 10);
+
+      const res = await apiPost("autoDrawGroups", {
+        cabang: cabang,
+        kategori_id: kategoriId,
+        jumlah_grup: jumlahGrup
+      });
+      if (!res.success) {
+        showToast(res.message || "Gagal mengacak grup.", "error");
+        return;
+      }
+      showToast(res.message, "success");
+      await loadAdminMatchesAndStandings();
+      triggerManualSyncPulse(false);
+    }
+
+    async function triggerGenerateSchedules() {
+      const cabang = document.getElementById("draw-cabang").value;
+      const kategoriId = cabang === "BADMINTON" ? document.getElementById("draw-kategori-id").value : "";
+      const tanggalMulai = document.getElementById("draw-start-date").value || new Date().toISOString().split("T")[0];
+      const jamMulai = document.getElementById("draw-start-time").value || "08:00";
+      const durasiMenit = parseInt(document.getElementById("draw-duration").value || "25", 10);
+      const lapangan = document.getElementById("draw-lapangan").value || "Lapangan Utama";
+
+      const res = await apiPost("generateGroupSchedules", {
+        cabang: cabang,
+        kategori_id: kategoriId,
+        tanggal_mulai: tanggalMulai,
+        jam_mulai: jamMulai,
+        durasi_menit: durasiMenit,
+        lapangan: lapangan
+      });
+      if (!res.success) {
+        showToast(res.message || "Gagal membuat jadwal otomatis.", "error");
+        return;
+      }
+      showToast(res.message, "success");
+      await loadAdminMatchesAndStandings();
+      triggerManualSyncPulse(false);
+    }
+
+    async function loadAdminMatchesAndStandings() {
+      const res = await apiPost("getAdminMatchesAndStandings", {});
+      if (!res.success || !res.data) return;
+
+      APP_STATE.adminMatchesCache = res.data.matches || [];
+      APP_STATE.adminEntitiesCache = res.data.entities || { futsal: [], badminton: [], hadroh: [] };
+
+      populateManualMatchEntities();
+      populateChampionEntities();
+      renderAdminMatchesTable();
+
+      const champs = res.data.champions || [];
+      document.getElementById("adm-champions-list").innerHTML = champs.map(function(c) {
+        return '<div class="p-3 rounded-xl bg-amber-50 border border-amber-200">' +
+          '<span class="px-2 py-0.5 rounded bg-amber-600 text-white text-[10px] font-bold">' + escapeHtml(c.label_juara) + ' (' + escapeHtml(c.cabang) + ')</span>' +
+          '<p class="font-extrabold text-slate-900 mt-1">' + escapeHtml(c.nama_pemenang) + '</p>' +
+          '<p class="text-[11px] text-slate-600">' + escapeHtml(c.nama_sekolah) + '</p></div>';
+      }).join("");
+    }
+
+    function populateManualMatchEntities() {
+      const cb = document.getElementById("man-match-cabang").value;
+      const list = cb === "FUTSAL" ? APP_STATE.adminEntitiesCache.futsal : APP_STATE.adminEntitiesCache.badminton;
+      const opts = (list || []).map(function(e) {
+        return '<option value="' + escapeHtml(e.id) + '">' + escapeHtml(e.label) + '</option>';
+      }).join("");
+      document.getElementById("man-match-entitas-a").innerHTML = opts;
+      document.getElementById("man-match-entitas-b").innerHTML = opts;
+    }
+
+    function populateChampionEntities() {
+      const cb = document.getElementById("champ-cabang").value;
+      const list = cb === "FUTSAL"
+        ? APP_STATE.adminEntitiesCache.futsal
+        : (cb === "BADMINTON" ? APP_STATE.adminEntitiesCache.badminton : APP_STATE.adminEntitiesCache.hadroh);
+      document.getElementById("champ-entitas-id").innerHTML = (list || []).map(function(e) {
+        return '<option value="' + escapeHtml(e.id) + '">' + escapeHtml(e.label) + '</option>';
+      }).join("");
+    }
+
+    async function submitManualMatch(event) {
+      event.preventDefault();
+      const cabang = document.getElementById("man-match-cabang").value;
+      const tahap = document.getElementById("man-match-tahap").value;
+      const entA = document.getElementById("man-match-entitas-a").value;
+      const entB = document.getElementById("man-match-entitas-b").value;
+      const tanggal = document.getElementById("man-match-tanggal").value;
+      const jam = document.getElementById("man-match-jam").value;
+      const lapangan = document.getElementById("man-match-lapangan").value;
+
+      const res = await apiPost("createManualMatch", {
+        cabang: cabang,
+        tahap: tahap,
+        entitas_a_id: entA,
+        entitas_b_id: entB,
+        tanggal: tanggal,
+        jam_mulai: jam,
+        lapangan: lapangan
+      });
+      if (!res.success) {
+        showToast(res.message || "Gagal menambah jadwal manual.", "error");
+        return;
+      }
+      showToast(res.message, "success");
+      await loadAdminMatchesAndStandings();
+      triggerManualSyncPulse(false);
+    }
+
+    function renderAdminMatchesTable() {
+      const flt = document.getElementById("adm-match-filter").value;
+      const list = APP_STATE.adminMatchesCache.filter(function(m) {
+        return flt === "ALL" || m.cabang === flt;
+      });
+
+      const tbody = document.getElementById("adm-matches-tbody");
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">Belum ada jadwal pertandingan.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = list.map(function(m) {
+        return '<tr class="hover:bg-slate-50">' +
+          '<td class="py-2.5 px-3 font-mono text-[11px]">' + escapeHtml(m.kode_pertandingan || "-") + '<span class="block text-slate-500">' + escapeHtml(m.tanggal + " " + m.jam_mulai) + '</span></td>' +
+          '<td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-slate-800 text-white text-[10px] font-bold">' + escapeHtml(m.cabang) + '</span><span class="block text-[11px] text-slate-500">' + escapeHtml(m.nama_grup || m.tahap) + '</span></td>' +
+          '<td class="py-2.5 px-3 font-bold text-slate-900">' + escapeHtml(m.nama_entitas_a) + ' <span class="text-slate-400 font-normal">vs</span> ' + escapeHtml(m.nama_entitas_b) + '</td>' +
+          '<td class="py-2.5 px-3 whitespace-nowrap">' +
+          '<input type="number" id="sc-a-' + m.jadwal_id + '" value="' + escapeHtml(m.skor_a) + '" class="w-12 px-1.5 py-1 rounded border border-slate-300 text-center font-mono font-bold" /> : ' +
+          '<input type="number" id="sc-b-' + m.jadwal_id + '" value="' + escapeHtml(m.skor_b) + '" class="w-12 px-1.5 py-1 rounded border border-slate-300 text-center font-mono font-bold" /></td>' +
+          '<td class="py-2.5 px-3"><select id="st-' + m.jadwal_id + '" class="px-2 py-1 rounded border border-slate-300 font-bold">' +
+          '<option value="UPCOMING"' + (m.status === "UPCOMING" ? " selected" : "") + '>UPCOMING</option>' +
+          '<option value="LIVE"' + (m.status === "LIVE" ? " selected" : "") + '>LIVE</option>' +
+          '<option value="FINISHED"' + (m.status === "FINISHED" ? " selected" : "") + '>FINISHED</option>' +
+          '</select></td>' +
+          '<td class="py-2.5 px-3 text-right"><button type="button" onclick="saveAdminMatchScore(\'' + escapeJsAttr(m.jadwal_id) + '\')" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold">Simpan</button></td>' +
+          '</tr>';
+      }).join("");
+    }
+
+    async function saveAdminMatchScore(jadwalId) {
+      const skorA = document.getElementById("sc-a-" + jadwalId).value;
+      const skorB = document.getElementById("sc-b-" + jadwalId).value;
+      const status = document.getElementById("st-" + jadwalId).value;
+
+      const res = await apiPost("saveMatchResult", {
+        jadwal_id: jadwalId,
+        skor_a: skorA === "" ? 0 : Number(skorA),
+        skor_b: skorB === "" ? 0 : Number(skorB),
+        status: status
+      });
+      if (!res.success) {
+        showToast(res.message || "Gagal menyimpan skor.", "error");
+        return;
+      }
+      showToast(res.message, "success");
+      await loadAdminMatchesAndStandings();
+      triggerManualSyncPulse(false);
+    }
+
+    async function submitOfficialChampion(event) {
+      event.preventDefault();
+      const cabang = document.getElementById("champ-cabang").value;
+      const peringkat = Number(document.getElementById("champ-peringkat").value);
+      const entitasId = document.getElementById("champ-entitas-id").value;
+
+      const res = await apiPost("publishOfficialChampion", {
+        cabang: cabang,
+        peringkat: peringkat,
+        entitas_id: entitasId
+      });
+      if (!res.success) {
+        showToast(res.message || "Gagal mempublikasikan juara.", "error");
+        return;
+      }
+      showToast(res.message, "success");
+      await loadAdminMatchesAndStandings();
+      triggerManualSyncPulse(false);
+    }
+
+    /**
+     * ======================================================================
+     * ADMIN TAB 4: DEWAN JURI HADROH (PHASE 5)
+     * ======================================================================
+     */
+    async function loadHadrohJudgingWorkspace() {
+      const res = await apiPost("getHadrohJudgingWorkspace", {});
+      if (!res.success || !res.data) return;
+      APP_STATE.hadrohWorkspaceCache = res.data;
+
+      const pubBadge = document.getElementById("hadroh-pub-state-badge");
+      if (res.data.isPublished) {
+        pubBadge.textContent = "HASIL DIPUBLIKASIKAN";
+        pubBadge.className = "px-3 py-1 rounded-full bg-emerald-600 text-white text-xs font-bold";
+      } else {
+        pubBadge.textContent = "HASIL TERTUTUP (INTERNAL)";
+        pubBadge.className = "px-3 py-1 rounded-full bg-slate-700 text-white text-xs font-bold";
+      }
+
+      const grpSel = document.getElementById("hadroh-score-grup-id");
+      const currentVal = grpSel.value;
+      grpSel.innerHTML = (res.data.groups || []).map(function(g) {
+        return '<option value="' + escapeHtml(g.grup_hadroh_id) + '">#' + escapeHtml(g.nomor_urut_tampil) + ' — ' + escapeHtml(g.nama_grup) + ' (' + escapeHtml(g.nama_sekolah) + ')</option>';
+      }).join("");
+      if (currentVal) grpSel.value = currentVal;
+
+      const critBox = document.getElementById("hadroh-criteria-inputs");
+      critBox.innerHTML = (res.data.criteria || []).map(function(c) {
+        return '<div class="p-3 rounded-xl bg-slate-50 border border-slate-200">' +
+          '<div class="flex justify-between mb-1"><span class="font-bold text-slate-800">' + escapeHtml(c.nama_kriteria) + '</span>' +
+          '<span class="text-slate-500">Bobot ' + c.bobot_persen + '% (Maks ' + c.skor_maksimal + ')</span></div>' +
+          '<input type="number" step="0.5" min="0" max="' + c.skor_maksimal + '" data-kriteria-id="' + escapeHtml(c.kriteria_id) + '" required class="hadroh-crit-input w-full px-3 py-1.5 rounded-lg border border-slate-300 font-mono font-bold" />' +
+          '</div>';
+      }).join("");
+
+      loadExistingJudgeScoresForGroup();
+
+      const tbody = document.getElementById("adm-hadroh-ranking-tbody");
+      tbody.innerHTML = (res.data.ranking || []).map(function(r, idx) {
+        return '<tr class="hover:bg-slate-50">' +
+          '<td class="py-2.5 px-3 font-extrabold text-slate-900">#' + (idx + 1) + '</td>' +
+          '<td class="py-2.5 px-3 font-mono">' + escapeHtml(r.nomor_urut_tampil) + '</td>' +
+          '<td class="py-2.5 px-3"><strong>' + escapeHtml(r.nama_grup) + '</strong><span class="block text-[11px] text-slate-500">' + escapeHtml(r.nama_sekolah) + '</span></td>' +
+          '<td class="py-2.5 px-3">' + r.jumlah_juri_menilai + ' Juri</td>' +
+          '<td class="py-2.5 px-3 text-right font-mono font-extrabold text-emerald-700">' + r.nilai_akhir + '</td></tr>';
+      }).join("");
+    }
+
+    function loadExistingJudgeScoresForGroup() {
+      const data = APP_STATE.hadrohWorkspaceCache;
+      if (!data) return;
+      const grupId = document.getElementById("hadroh-score-grup-id").value;
+      const myScores = (data.myScores || []).filter(function(s) { return s.grup_hadroh_id === grupId; });
+
+      document.querySelectorAll(".hadroh-crit-input").forEach(function(inp) {
+        const kid = inp.getAttribute("data-kriteria-id");
+        const found = myScores.find(function(s) { return s.kriteria_id === kid; });
+        inp.value = found ? found.nilai_mentah : "";
+      });
+    }
+
+    async function submitHadrohScoreForm(event) {
+      event.preventDefault();
+      const grupId = document.getElementById("hadroh-score-grup-id").value;
+      const scores = [];
+      document.querySelectorAll(".hadroh-crit-input").forEach(function(inp) {
+        scores.push({
+          kriteria_id: inp.getAttribute("data-kriteria-id"),
+          nilai_mentah: Number(inp.value || 0)
+        });
+      });
+
+      const res = await apiPost("submitHadrohScore", {
+        grup_hadroh_id: grupId,
+        scores: scores
+      });
+      if (!res.success) {
+        showToast(res.message || "Gagal menyimpan nilai juri.", "error");
+        return;
+      }
+      showToast(res.message, "success");
+      await loadHadrohJudgingWorkspace();
+      triggerManualSyncPulse(false);
+    }
+
+    async function toggleHadrohPublicResults() {
+      const res = await apiPost("toggleHadrohPublish", {});
+      if (!res.success) {
+        showToast(res.message || "Gagal mengubah status publikasi Hadroh.", "error");
+        return;
+      }
+      showToast(res.message, "success");
+      await loadHadrohJudgingWorkspace();
+      triggerManualSyncPulse(false);
+    }
+
+    /**
+     * ======================================================================
+     * ADMIN TAB 5: QR CODE CHECK-IN SCANNER (PHASE 6)
+     * ======================================================================
+     */
+    async function loadAdminCheckinData() {
+      const res = await apiPost("getAdminCheckinData", {});
+      if (!res.success || !res.data) return;
+
+      const st = res.data.stats || {};
+      document.getElementById("checkin-ratio-badge").textContent = (st.totalCheckedIn || 0) + " / " + (st.totalApproved || 0) + " Hadir";
+
+      const list = res.data.approvedList || [];
+      const tbody = document.getElementById("adm-checkin-tbody");
+      tbody.innerHTML = list.length === 0
+        ? '<tr><td colspan="5" class="py-6 text-center text-slate-400">Belum ada kontingen berstatus APPROVED.</td></tr>'
+        : list.map(function(item) {
+            return '<tr class="hover:bg-slate-50">' +
+              '<td class="py-2.5 px-3 font-mono font-bold">' + escapeHtml(item.no_registrasi) + '</td>' +
+              '<td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-slate-800 text-white text-[10px] font-bold">' + escapeHtml(item.cabang) + '</span></td>' +
+              '<td class="py-2.5 px-3"><strong>' + escapeHtml(item.nama_tim_atau_peserta) + '</strong><span class="block text-[11px] text-slate-500">' + escapeHtml(item.nama_sekolah) + '</span></td>' +
+              '<td class="py-2.5 px-3">' + (item.checked_in
+                ? '<span class="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-extrabold">SUDAH HADIR</span>'
+                : '<span class="px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-extrabold">BELUM CHECK-IN</span>') + '</td>' +
+              '<td class="py-2.5 px-3 text-right">' + (item.checked_in
+                ? '<span class="text-[11px] text-slate-400">' + escapeHtml(String(item.waktu_checkin).slice(11, 16)) + '</span>'
+                : '<button type="button" onclick="executeCheckinRequest(\'' + escapeJsAttr(item.no_registrasi) + '\', \'MANUAL_DESK\')" class="px-2.5 py-1 rounded-lg bg-[#0A192F] text-white font-bold">Check-In</button>') + '</td>' +
+              '</tr>';
+          }).join("");
+    }
+
+    function startQrCameraScanner() {
+      if (APP_STATE.isQrScannerRunning) return;
+      const scanner = new Html5Qrcode("qr-reader-viewport");
+      APP_STATE.qrScannerInstance = scanner;
+
+      scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        function(decodedText) {
+          stopQrCameraScanner();
+          executeCheckinRequest(decodedText, "QR_SCAN");
+        },
+        function() {}
+      ).then(function() {
+        APP_STATE.isQrScannerRunning = true;
+        document.getElementById("btn-start-qr-cam").classList.add("hidden");
+        document.getElementById("btn-stop-qr-cam").classList.remove("hidden");
+      }).catch(function() {
+        showToast("Kamera tidak dapat diakses; gunakan input manual kode registrasi.", "error");
+      });
+    }
+
+    function stopQrCameraScanner() {
+      if (APP_STATE.qrScannerInstance && APP_STATE.isQrScannerRunning) {
+        APP_STATE.qrScannerInstance.stop().catch(function() {});
+      }
+      APP_STATE.isQrScannerRunning = false;
+      const startBtn = document.getElementById("btn-start-qr-cam");
+      const stopBtn = document.getElementById("btn-stop-qr-cam");
+      if (startBtn) startBtn.classList.remove("hidden");
+      if (stopBtn) stopBtn.classList.add("hidden");
+    }
+
+    function submitManualQrCheckin(event) {
+      event.preventDefault();
+      const code = document.getElementById("manual-checkin-code").value.trim();
+      if (!code) return;
+      executeCheckinRequest(code, "MANUAL_CODE");
+    }
+
+    async function executeCheckinRequest(code, metode) {
+      const fbBox = document.getElementById("qr-scan-feedback-box");
+      const res = await apiPost("processQrCheckin", { code: code, metode: metode });
+
+      fbBox.classList.remove("hidden");
+      if (res.success && res.data) {
+        const reg = res.data.registration || {};
+        fbBox.className = "rounded-xl p-4 border-2 border-emerald-500 bg-emerald-50 text-xs space-y-1.5";
+        fbBox.innerHTML = '<span class="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-extrabold">CHECK-IN BERHASIL</span>' +
+          '<p class="font-extrabold text-slate-900 text-sm mt-1">' + escapeHtml(reg.nama_tim_atau_peserta) + ' (' + escapeHtml(reg.no_registrasi) + ')</p>' +
+          '<p class="text-slate-700">' + escapeHtml(reg.nama_sekolah) + ' • Cabang ' + escapeHtml(reg.cabang) + '</p>';
+        document.getElementById("manual-checkin-code").value = "";
+        showToast(res.message, "success");
+        await loadAdminCheckinData();
+        triggerManualSyncPulse(false);
+      } else {
+        fbBox.className = "rounded-xl p-4 border-2 border-rose-500 bg-rose-50 text-xs space-y-1";
+        fbBox.innerHTML = '<span class="px-2.5 py-0.5 rounded-full bg-rose-600 text-white font-extrabold">PERINGATAN CHECK-IN</span>' +
+          '<p class="font-bold text-rose-800 mt-1">' + escapeHtml(res.message || "Kode tidak valid.") + '</p>';
+        showToast(res.message || "Check-in gagal.", "error");
+      }
+    }
+
+    /**
+     * ======================================================================
+     * ADMIN TAB 6, 7, 8, 9, 10, 11 (GALERI, SERTIFIKAT, WA, DIAGNOSTIK, USERS)
+     * ======================================================================
+     */
+    async function loadAdminGallery() {
+      const res = await apiPost("getAdminGallery", {});
+      if (!res.success || !res.data) return;
+      const items = res.data.items || [];
+      document.getElementById("adm-gallery-grid").innerHTML = items.map(function(g) {
+        return '<div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs text-xs">' +
+          '<img src="' + escapeHtml(g.thumbnail_url || g.media_url) + '" class="w-full h-40 object-cover bg-slate-100" />' +
+          '<div class="p-3.5 flex items-center justify-between gap-2">' +
+          '<div class="truncate"><p class="font-extrabold text-slate-900 truncate">' + escapeHtml(g.judul) + '</p>' +
+          '<span class="text-slate-500">' + escapeHtml(g.kategori) + '</span></div>' +
+          '<button type="button" onclick="deleteAdminGalleryItem(\'' + escapeJsAttr(g.galeri_id) + '\')" class="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-bold">Hapus</button>' +
+          '</div></div>';
+      }).join("");
+    }
+
+    async function submitAdminGalleryItem(event) {
+      event.preventDefault();
+      const res = await apiPost("saveGalleryMedia", {
+        judul: document.getElementById("gal-judul").value.trim(),
+        kategori: document.getElementById("gal-kategori").value,
+        album: document.getElementById("gal-album").value.trim(),
+        media_url: document.getElementById("gal-media-url").value.trim(),
+        tanggal_kegiatan: document.getElementById("gal-tanggal").value
+      });
+      if (!res.success) {
+        showToast(res.message || "Gagal menyimpan galeri.", "error");
+        return;
+      }
+      showToast(res.message, "success");
+      event.target.reset();
+      await loadAdminGallery();
+      triggerManualSyncPulse(false);
+    }
+
+    async function deleteAdminGalleryItem(galeriId) {
+      const res = await apiPost("deleteGalleryMedia", { galeri_id: galeriId });
+      if (res.success) {
+        showToast(res.message, "success");
+        await loadAdminGallery();
+        triggerManualSyncPulse(false);
+      }
+    }
+
+    async function loadAdminCertificates() {
+      const res = await apiPost("getAdminCertificates", {});
+      if (!res.success || !res.data) return;
+      const certs = res.data.certificates || [];
+      document.getElementById("adm-certificates-tbody").innerHTML = certs.length === 0
+        ? '<tr><td colspan="4" class="py-6 text-center text-slate-400">Belum ada sertifikat PDF diterbitkan.</td></tr>'
+        : certs.map(function(c) {
+            return '<tr class="hover:bg-slate-50">' +
+              '<td class="py-2.5 px-3 font-mono"><strong>' + escapeHtml(c.nomor_sertifikat) + '</strong><span class="block text-[10px] text-emerald-700">' + escapeHtml(c.kode_verifikasi) + '</span></td>' +
+              '<td class="py-2.5 px-3"><strong>' + escapeHtml(c.nama_penerima) + '</strong><span class="block text-[11px] text-slate-500">' + escapeHtml(c.nama_sekolah) + '</span></td>' +
+              '<td class="py-2.5 px-3">' + escapeHtml(c.pencapaian) + '</td>' +
+              '<td class="py-2.5 px-3 text-right space-x-1 whitespace-nowrap">' +
+              (c.pdf_url ? '<a href="' + escapeHtml(c.pdf_url) + '" target="_blank" class="px-2.5 py-1 rounded-lg bg-[#0A192F] text-white font-bold inline-block">PDF</a>' : '') +
+              '<button type="button" onclick="deleteAdminCertificate(\'' + escapeJsAttr(c.sertifikat_id) + '\')" class="px-2 py-1 rounded-lg bg-rose-600 text-white font-bold">Hapus</button>' +
+              '</td></tr>';
+          }).join("");
+    }
+
+    async function submitGenerateSingleCertificate(event) {
+      event.preventDefault();
+      const btn = document.getElementById("btn-gen-single-cert");
+      btn.disabled = true;
+      btn.textContent = "Membuat PDF di Drive...";
+      try {
+        const res = await apiPost("generateCertificatePdf", {
+          jenis_sertifikat: document.getElementById("cert-jenis").value,
+          cabang: document.getElementById("cert-cabang").value,
+          nama_penerima: document.getElementById("cert-penerima").value.trim(),
+          nama_sekolah: document.getElementById("cert-sekolah").value.trim(),
+          pencapaian: document.getElementById("cert-pencapaian").value.trim()
+        });
+        if (!res.success) {
+          showToast(res.message || "Gagal menerbitkan PDF.", "error");
+          return;
+        }
+        showToast(res.message, "success");
+        event.target.reset();
+        await loadAdminCertificates();
+        triggerManualSyncPulse(false);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Terbitkan PDF Satuan";
+      }
+    }
+
+    async function triggerBatchCertificates(mode) {
+      showToast("Memproses penerbitan massal sertifikat PDF...", "info");
+      const res = await apiPost("batchGenerateCertificates", { mode: mode });
+      if (!res.success) {
+        showToast(res.message || "Gagal membuat sertifikat massal.", "error");
+        return;
+      }
+      showToast(res.message, "success");
+      await loadAdminCertificates();
+      triggerManualSyncPulse(false);
+    }
+
+    async function deleteAdminCertificate(sertifikatId) {
+      const res = await apiPost("deleteCertificate", { sertifikat_id: sertifikatId });
+      if (res.success) {
+        showToast(res.message, "success");
+        await loadAdminCertificates();
+        triggerManualSyncPulse(false);
+      }
+    }
+
+    function onWaModeChange() {
+      const mode = document.getElementById("wa-send-mode").value;
+      document.getElementById("wa-single-target-box").classList.toggle("hidden", mode !== "SINGLE");
+      document.getElementById("wa-broadcast-branch-box").classList.toggle("hidden", mode !== "BROADCAST_APPROVED");
+    }
+
+    async function loadAdminWhatsAppWorkspace() {
+      const res = await apiPost("getAdminWhatsAppWorkspace", {});
+      if (!res.success || !res.data) return;
+
+      const recipients = res.data.recipients || [];
+      document.getElementById("wa-recipient-reg-id").innerHTML = recipients.map(function(r) {
+        return '<option value="' + escapeHtml(r.pendaftaran_id) + '">' + escapeHtml(r.no_registrasi + " — " + r.nama_tim_atau_peserta + " (" + r.nama_sekolah + " | " + r.no_wa_pembina + ")") + '</option>';
+      }).join("");
+
+      const logs = res.data.logs || [];
+      document.getElementById("wa-stats-badge").textContent = logs.length + " Log";
+      document.getElementById("adm-wa-logs-tbody").innerHTML = logs.length === 0
+        ? '<tr><td colspan="4" class="py-6 text-center text-slate-400">Belum ada riwayat notifikasi WhatsApp.</td></tr>'
+        : logs.map(function(l) {
+            const badgeClass = l.status_kirim === "SENT" ? "bg-emerald-600 text-white" : (l.status_kirim === "FAILED" ? "bg-rose-600 text-white" : "bg-amber-600 text-white");
+            return '<tr class="hover:bg-slate-50">' +
+              '<td class="py-2.5 px-3 font-mono"><strong>' + escapeHtml(l.nomor_tujuan) + '</strong><span class="block text-[11px] font-sans text-slate-500">' + escapeHtml(l.nama_sekolah) + '</span></td>' +
+              '<td class="py-2.5 px-3 max-w-xs truncate">' + escapeHtml(l.pesan) + '</td>' +
+              '<td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ' + badgeClass + '">' + escapeHtml(l.status_kirim) + '</span></td>' +
+              '<td class="py-2.5 px-3 text-right space-x-1 whitespace-nowrap">' +
+              (l.wa_link ? '<a href="' + escapeHtml(l.wa_link) + '" target="_blank" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold inline-block">Buka WA</a>' : '') +
+              (l.status_kirim !== "SENT" ? '<button type="button" onclick="markWaSent(\'' + escapeJsAttr(l.wa_log_id) + '\')" class="px-2 py-1 rounded-lg bg-slate-800 text-white font-bold">Tandai Sent</button>' : '') +
+              '</td></tr>';
+          }).join("");
+    }
+
+    async function submitWhatsAppMessage(event) {
+      event.preventDefault();
+      const mode = document.getElementById("wa-send-mode").value;
+      const res = await apiPost("sendWhatsAppNotification", {
+        mode: mode,
+        pendaftaran_id: document.getElementById("wa-recipient-reg-id").value,
+        cabang: document.getElementById("wa-broadcast-branch").value,
+        pesan: document.getElementById("wa-message-body").value.trim()
+      });
+      if (!res.success) {
+        showToast(res.message || "Gagal memproses notifikasi WhatsApp.", "error");
+        return;
+      }
+      showToast(res.message, "success");
+      await loadAdminWhatsAppWorkspace();
+      triggerManualSyncPulse(false);
+    }
+
+    async function markWaSent(waLogId) {
+      const res = await apiPost("markWhatsAppLogSent", { wa_log_id: waLogId });
+      if (res.success) {
+        showToast(res.message, "success");
+        await loadAdminWhatsAppWorkspace();
+      }
+    }
+
+    async function loadAdminAnnouncements() {
+      const res = await apiPost("getAdminAnnouncements", {});
+      if (!res.success || !res.data) return;
+      document.getElementById("adm-announcements-list").innerHTML = (res.data.items || []).map(function(a) {
+        return '<div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs text-xs flex items-start justify-between gap-3">' +
+          '<div><h4 class="font-extrabold text-slate-900">' + escapeHtml(a.judul) + '</h4>' +
+          '<p class="text-slate-600 mt-1">' + escapeHtml(a.ringkasan) + '</p></div>' +
+          '<button type="button" onclick="deleteAdminAnnouncement(\'' + escapeJsAttr(a.pengumuman_id) + '\')" class="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-bold">Hapus</button>' +
+          '</div>';
+      }).join("");
+    }
+
+    async function submitAdminAnnouncement(event) {
+      event.preventDefault();
+      const res = await apiPost("saveAnnouncement", {
+        judul: document.getElementById("ann-judul").value.trim(),
+        ringkasan: document.getElementById("ann-ringkasan").value.trim(),
+        is_pinned_display: document.getElementById("ann-pinned").value
+      });
+      if (res.success) {
+        showToast(res.message, "success");
+        event.target.reset();
+        await loadAdminAnnouncements();
+        triggerManualSyncPulse(false);
+      }
+    }
+
+    async function deleteAdminAnnouncement(id) {
+      const res = await apiPost("deleteAnnouncement", { pengumuman_id: id });
+      if (res.success) {
+        showToast(res.message, "success");
+        await loadAdminAnnouncements();
+        triggerManualSyncPulse(false);
+      }
+    }
+
+    async function runSystemDiagnosticsAdmin(autoRepair) {
+      const panel = document.getElementById("diagnostics-result-panel");
+      panel.innerHTML = '<p class="text-slate-500">Menjalankan audit 27 sheet Google Spreadsheet...</p>';
+      const res = await apiPost("runSystemDiagnostics", { auto_repair: autoRepair });
+      if (!res.success || !res.data) {
+        panel.innerHTML = '<p class="text-rose-600 font-bold">' + escapeHtml(res.message || "Audit gagal.") + '</p>';
+        return;
+      }
+
+      const d = res.data;
+      const sheetBadges = (d.sheetAudit || []).map(function(s) {
+        const cls = s.status === "OK" ? "bg-emerald-600 text-white" : "bg-rose-600 text-white";
+        return '<span class="px-2.5 py-1 rounded-lg font-mono text-[11px] font-bold ' + cls + '">' + escapeHtml(s.sheetName) + ' (' + s.rowCount + ')</span>';
+      }).join(" ");
+
+      panel.innerHTML =
+        '<div class="flex flex-wrap gap-3 font-bold">' +
+        '<span class="px-3 py-1 rounded-lg bg-[#0A192F] text-white">Engine: ' + escapeHtml(d.version) + '</span>' +
+        '<span class="px-3 py-1 rounded-lg bg-emerald-600 text-white">Sheet Sehat: ' + d.sheetsOkCount + ' / ' + d.totalExpectedSheets + '</span>' +
+        '<span class="px-3 py-1 rounded-lg bg-amber-600 text-white">Auto-Repaired: ' + d.repairedCount + '</span>' +
+        '</div>' +
+        '<div class="flex flex-wrap gap-1.5 pt-2">' + sheetBadges + '</div>';
+      showToast("Audit diagnostik selesai dijalankan.", "success");
+    }
+
+    async function clearServerCacheAdmin() {
+      const res = await apiPost("clearSystemCache", {});
+      if (res.success) {
+        showToast(res.message, "success");
+        triggerManualSyncPulse(true);
+      }
+    }
+
+    async function loadAdminUsersAndRoles() {
+      const res = await apiPost("getAdminUsersAndRoles", {});
+      if (!res.success || !res.data) return;
+
+      document.getElementById("usr-role-id").innerHTML = (res.data.roles || []).map(function(r) {
+        return '<option value="' + escapeHtml(r.role_id) + '">' + escapeHtml(r.role_name + " (" + r.role_code + ")") + '</option>';
+      }).join("");
+
+      document.getElementById("adm-users-tbody").innerHTML = (res.data.users || []).map(function(u) {
+        return '<tr class="hover:bg-slate-50">' +
+          '<td class="py-2.5 px-3"><strong>' + escapeHtml(u.nama_lengkap) + '</strong><span class="block font-mono text-slate-500">@' + escapeHtml(u.username) + '</span></td>' +
+          '<td class="py-2.5 px-3 font-bold">' + escapeHtml(u.role_code) + '</td>' +
+          '<td class="py-2.5 px-3">' + escapeHtml(u.cabang_assigned) + '</td>' +
+          '<td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ' + (u.is_active ? 'bg-emerald-600 text-white' : 'bg-slate-500 text-white') + '">' + (u.is_active ? 'AKTIF' : 'NONAKTIF') + '</span></td>' +
+          '</tr>';
+      }).join("");
+    }
+
+    async function submitCreateAdminUser(event) {
+      event.preventDefault();
+      const res = await apiPost("createAdminUser", {
+        nama_lengkap: document.getElementById("usr-nama").value.trim(),
+        username: document.getElementById("usr-username").value.trim(),
+        password: document.getElementById("usr-password").value,
+        role_id: document.getElementById("usr-role-id").value,
+        cabang_assigned: document.getElementById("usr-cabang").value
+      });
+      if (!res.success) {
+        showToast(res.message || "Gagal membuat akun.", "error");
+        return;
+      }
+      showToast(res.message, "success");
+      event.target.reset();
+      await loadAdminUsersAndRoles();
+    }
+
+    /**
+     * ======================================================================
+     * UTILITIES: TOAST & HTML ESCAPING
+     * ======================================================================
+     */
+    function showToast(message, type) {
+      const container = document.getElementById("global-toast-container");
+      const toast = document.createElement("div");
+      const bgClass = type === "error"
+        ? "bg-rose-600 text-white border-rose-400"
+        : (type === "info" ? "bg-[#0A192F] text-white border-slate-600" : "bg-emerald-600 text-white border-emerald-400");
+      toast.className = "pointer-events-auto px-4 py-3 rounded-xl border shadow-xl text-xs font-bold transition transform duration-300 " + bgClass;
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      setTimeout(function() {
+        toast.style.opacity = "0";
+        setTimeout(function() { toast.remove(); }, 300);
+      }, 4200);
+    }
+
+    function escapeHtml(val) {
+      if (val === undefined || val === null) return "";
+      return String(val)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function escapeJsAttr(val) {
+      return String(val || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+    }
+
+    /**
+     * ======================================================================
+     * BOOTSTRAP APPLICATION ON DOMContentLoaded
+     * ======================================================================
+     */
+    document.addEventListener("DOMContentLoaded", async function() {
+      if (window.lucide) lucide.createIcons();
+      initRegistrationDynamicRows();
+      await Promise.all([
+        loadPublicBootstrap(),
+        loadPublicPortalData(),
+        restoreAdminSessionOnBoot()
+      ]);
+      startAutoSyncEngine();
+    });
+  </script>
+</body>
+</html>
