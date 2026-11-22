@@ -499,200 +499,6 @@
         return { success: false, message: "URL Web App GAS (/exec) belum diisi." };
       }
 
-      /**
-       * ========================================================================
-       * PHASE 10: REAL-TIME AUTO LIVE SYNC (FIXED NULL VERSION & DIAGNOSTIC)
-       * ========================================================================
-       */
-      const BCH_SYNC_CONFIG = {
-        POLL_INTERVAL_MS: 8000,         // Cek denyut server setiap 8 detik
-        FORCE_REFRESH_EVERY_TICKS: 3    // Paksa sinkron penuh setiap 3 siklus (~24 detik)
-      };
-
-      let LAST_SYNC_VERSION = null;     // WAJIB null (bukan "") agar syncVersion kosong tetap terdeteksi
-      let SYNC_TICK_COUNT = 0;
-      let IS_SYNCING = false;
-      let LAST_SYNC_ERROR_MSG = "";
-      let BCH_SYNC_INTERVAL_ID = null;
-
-      function setLiveSyncBadgeState(state, customText) {
-        const badge = document.getElementById("liveSyncBadge");
-        const icon = document.getElementById("liveSyncIcon");
-        const textEl = document.getElementById("liveSyncText");
-        if (!badge) return;
-
-        const isDisconnected = state === "error" || !navigator.onLine;
-        LAST_SYNC_ERROR_MSG = isDisconnected
-          ? (customText || "Tidak tersinkronisasi (Offline / Server GAS belum merespons)")
-          : "";
-
-        const tooltipText = isDisconnected
-          ? "OFFLINE / GAGAL SYNC: " + LAST_SYNC_ERROR_MSG
-          : (state === "syncing" ? "Menyinkronkan data terbaru..." : "Live Sync Aktif (Terhubung Real-Time)");
-
-        badge.title = tooltipText + " — Klik untuk sinkronisasi paksa";
-        if (textEl) textEl.textContent = "LIVE";
-
-        if (isDisconnected) {
-          badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 active:scale-95 shadow-sm cursor-pointer transition-all duration-200 select-none";
-          if (icon) icon.className = "bi bi-wifi-off text-xs leading-none text-rose-600";
-          if (textEl) textEl.className = "text-[10px] font-extrabold tracking-wider uppercase leading-none text-rose-600";
-        } else {
-          badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white text-emerald-600 border border-emerald-200 hover:bg-slate-50 active:scale-95 shadow-sm cursor-pointer transition-all duration-200 select-none";
-          if (icon) {
-            icon.className = state === "syncing"
-              ? "bi bi-broadcast text-xs leading-none text-emerald-600 animate-pulse"
-              : "bi bi-broadcast text-xs leading-none text-emerald-600";
-          }
-          if (textEl) textEl.className = "text-[10px] font-extrabold tracking-wider uppercase leading-none text-emerald-600";
-        }
-      }
-
-      async function executeLiveSyncCycle(forceFullSync = false) {
-        if (!navigator.onLine) {
-          setLiveSyncBadgeState("error", "Koneksi internet perangkat terputus");
-          return;
-        }
-        if (IS_SYNCING) return;
-        IS_SYNCING = true;
-
-        try {
-          const pulseRes = await callApi("getSyncPulse", {}, "GET");
-
-          if (pulseRes && pulseRes.success && pulseRes.data) {
-            const serverVer = String(pulseRes.data.syncVersion ?? "0");
-            SYNC_TICK_COUNT += 1;
-
-            // Inisialisasi pertama kali saat halaman dibuka
-            if (LAST_SYNC_VERSION === null && !forceFullSync) {
-              LAST_SYNC_VERSION = serverVer;
-              setLiveSyncBadgeState("active", "Live Sync Aktif");
-              return;
-            }
-
-            // Refresh data jika versi server berubah, paksa klik, atau mencapai interval periodik
-            if (
-              forceFullSync ||
-              LAST_SYNC_VERSION !== serverVer ||
-              SYNC_TICK_COUNT >= BCH_SYNC_CONFIG.FORCE_REFRESH_EVERY_TICKS
-            ) {
-              setLiveSyncBadgeState("syncing", "Menyinkronkan data...");
-              LAST_SYNC_VERSION = serverVer;
-              SYNC_TICK_COUNT = 0;
-              await performSilentRefreshAllActiveViews();
-              if (forceFullSync) {
-                showToast("Data berhasil disinkronkan dengan server.", "success");
-              }
-            }
-
-            setLiveSyncBadgeState("active", "Live Sync Aktif");
-          } else {
-            const errReason = (pulseRes && pulseRes.message)
-              ? pulseRes.message
-              : "Endpoint getSyncPulse tidak ditemukan (Pastikan Code.gs sudah Deploy New Version)";
-            setLiveSyncBadgeState("error", errReason);
-            if (forceFullSync) showToast("Gagal Sync: " + errReason, "error");
-          }
-        } catch (err) {
-          const msg = err && err.message ? err.message : "Gagal terhubung ke Google Apps Script";
-          setLiveSyncBadgeState("error", msg);
-          if (forceFullSync) showToast("Koneksi Sync Error: " + msg, "error");
-        } finally {
-          IS_SYNCING = false;
-        }
-      }
-
-      function startAutoLiveSync() {
-        if (window.__BCH_LIVE_SYNC_INITIALIZED__) return;
-        window.__BCH_LIVE_SYNC_INITIALIZED__ = true;
-
-        const badge = document.getElementById("liveSyncBadge");
-        if (badge) {
-          badge.addEventListener("click", () => executeLiveSyncCycle(true));
-        }
-
-        window.addEventListener("offline", () => {
-          setLiveSyncBadgeState("error", "Koneksi internet terputus");
-        });
-        window.addEventListener("online", () => {
-          executeLiveSyncCycle(true);
-        });
-
-        document.addEventListener("visibilitychange", () => {
-          if (!document.hidden) executeLiveSyncCycle(false);
-        });
-
-        BCH_SYNC_INTERVAL_ID = setInterval(() => {
-          if (!document.hidden) executeLiveSyncCycle(false);
-        }, BCH_SYNC_CONFIG.POLL_INTERVAL_MS);
-
-        // Langsung cek status server saat pertama kali dimuat
-        executeLiveSyncCycle(false);
-      }
-    const ApiClient = {
-      getBaseUrl() {
-        return localStorage.getItem("BOASH_API_URL") || DEFAULT_API_URL;
-      },
-
-      setBaseUrl(url) {
-        localStorage.setItem("BOASH_API_URL", String(url || "").trim());
-      },
-
-      async request(action, payload = {}, useAuth = false, timeoutMs = 15000) {
-        const baseUrl = this.getBaseUrl();
-        if (!baseUrl) {
-          return {
-            success: false,
-            code: 0,
-            message: "URL Web App Backend Google Apps Script belum dikonfigurasi. Klik tombol 'API Config' di bagian atas."
-          };
-        }
-
-        const token = useAuth && Store.state.user ? Store.state.user.session_token : "";
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-        try {
-          const response = await fetch(baseUrl, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            redirect: "follow",
-            signal: controller.signal,
-            body: JSON.stringify({
-              action: action,
-              token: token,
-              payload: payload
-            })
-          });
-
-          clearTimeout(timer);
-          const text = await response.text();
-          let data;
-          try {
-            data = JSON.parse(text);
-          } catch (parseErr) {
-            return {
-              success: false,
-              code: 502,
-              message: "Respons server bukan JSON yang valid. Pastikan Web App di-deploy dengan akses 'Anyone'."
-            };
-          }
-
-          if (data.code === 401 && useAuth) {
-            Store.clearSession();
-          }
-
-          return data;
-        } catch (err) {
-          clearTimeout(timer);
-          if (err.name === "AbortError") {
-            return { success: false, code: 408, message: "Koneksi ke server melebihi batas waktu (Timeout 15 detik)." };
-          }
-          return { success: false, code: 503, message: "Gagal menghubungi server backend: " + err.message };
-        }
-      }
-    };
-
     /**
      * ============================================================================
      * APPLICATION STATE STORE
@@ -7105,8 +6911,160 @@
       }
     };
 
+    /**
+ * ========================================================================
+ * PHASE 10: REAL-TIME AUTO LIVE SYNC ENGINE (ANTI-HANG & ANTI-CACHE)
+ * ========================================================================
+ */
+    const BCH_SYNC_CONFIG = {
+      POLL_INTERVAL_MS: 8000,
+      REQUEST_TIMEOUT_MS: 10000,
+      FORCE_REFRESH_EVERY_TICKS: 3
+    };
+
+    let LAST_SYNC_VERSION = null;
+    let SYNC_TICK_COUNT = 0;
+    let IS_SYNCING = false;
+    let BCH_SYNC_INTERVAL_ID = null;
+
+    function setLiveSyncBadgeState(state, customText) {
+      const badge = document.getElementById("liveSyncBadge");
+      const icon = document.getElementById("liveSyncIcon");
+      const textEl = document.getElementById("liveSyncText");
+      if (!badge) return;
+
+      const isDisconnected = state === "error" || !navigator.onLine;
+      const reason = customText || (
+        isDisconnected ? "Tidak tersinkronisasi (Offline / URL GAS bermasalah)" :
+        state === "syncing" ? "Menyinkronkan data terbaru..." :
+        "Live Sync Aktif"
+      );
+
+      badge.title = (isDisconnected ? "OFFLINE: " : "ONLINE: ") + reason + " — Klik untuk sinkronisasi manual";
+      if (textEl) textEl.textContent = "LIVE";
+
+      if (isDisconnected) {
+        badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 active:scale-95 shadow-sm cursor-pointer transition-all duration-200 select-none";
+        if (icon) icon.className = "bi bi-wifi-off text-xs leading-none text-rose-600";
+        if (textEl) textEl.className = "text-[10px] font-extrabold tracking-wider uppercase leading-none text-rose-600";
+      } else {
+        badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white text-emerald-600 border border-emerald-200 hover:bg-slate-50 active:scale-95 shadow-sm cursor-pointer transition-all duration-200 select-none";
+        if (icon) {
+          icon.className = state === "syncing"
+            ? "bi bi-broadcast text-xs leading-none text-emerald-600 animate-pulse"
+            : "bi bi-broadcast text-xs leading-none text-emerald-600";
+        }
+        if (textEl) textEl.className = "text-[10px] font-extrabold tracking-wider uppercase leading-none text-emerald-600";
+      }
+    }
+
+    async function fetchSyncPulseWithTimeout() {
+      const apiUrl = (STATE.apiUrl || DEFAULT_API_URL || "").trim();
+      if (!apiUrl && !(typeof google !== "undefined" && google.script && google.script.run)) {
+        return { success: false, message: "URL Web App GAS (/exec) belum diatur." };
+      }
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), BCH_SYNC_CONFIG.REQUEST_TIMEOUT_MS);
+
+      try {
+        if (apiUrl) {
+          const url = `${apiUrl}?action=getSyncPulse&_ts=${Date.now()}`;
+          const res = await fetch(url, {
+            method: "GET",
+            cache: "no-store",
+            redirect: "follow",
+            signal: controller.signal
+          });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return await res.json();
+        } else {
+          return await callApi("getSyncPulse", {}, "GET");
+        }
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    async function executeLiveSyncCycle(forceFullSync = false) {
+      if (!navigator.onLine) {
+        setLiveSyncBadgeState("error", "Koneksi internet perangkat terputus");
+        return;
+      }
+      if (IS_SYNCING) return;
+      IS_SYNCING = true;
+
+      try {
+        const pulseRes = await fetchSyncPulseWithTimeout();
+
+        if (pulseRes && pulseRes.success && pulseRes.data) {
+          const serverVer = String(pulseRes.data.syncVersion ?? "0");
+          SYNC_TICK_COUNT += 1;
+
+          if (LAST_SYNC_VERSION === null && !forceFullSync) {
+            LAST_SYNC_VERSION = serverVer;
+            setLiveSyncBadgeState("active", "Live Sync Aktif");
+            return;
+          }
+
+          if (
+            forceFullSync ||
+            LAST_SYNC_VERSION !== serverVer ||
+            SYNC_TICK_COUNT >= BCH_SYNC_CONFIG.FORCE_REFRESH_EVERY_TICKS
+          ) {
+            setLiveSyncBadgeState("syncing", "Menyinkronkan data...");
+            LAST_SYNC_VERSION = serverVer;
+            SYNC_TICK_COUNT = 0;
+            await performSilentRefreshAllActiveViews();
+            if (forceFullSync) showToast("Data berhasil disinkronkan.", "success");
+          }
+
+          setLiveSyncBadgeState("active", "Live Sync Aktif");
+        } else {
+          const msg = (pulseRes && pulseRes.message) || "Endpoint getSyncPulse tidak merespons";
+          setLiveSyncBadgeState("error", msg);
+          if (forceFullSync) showToast("Sync Gagal: " + msg, "error");
+        }
+      } catch (err) {
+        const msg = err.name === "AbortError"
+          ? "Server GAS timeout (lebih dari 10 detik)"
+          : (err.message || "Gagal terhubung ke GAS (Cek izin akses Anyone)");
+        setLiveSyncBadgeState("error", msg);
+        if (forceFullSync) showToast("Sync Error: " + msg, "error");
+      } finally {
+        IS_SYNCING = false;
+      }
+    }
+
+    function startAutoLiveSync() {
+      if (window.__BCH_LIVE_SYNC_INITIALIZED__) return;
+      window.__BCH_LIVE_SYNC_INITIALIZED__ = true;
+
+      const badge = document.getElementById("liveSyncBadge");
+      if (badge) {
+        badge.addEventListener("click", () => executeLiveSyncCycle(true));
+      }
+
+      window.addEventListener("offline", () => setLiveSyncBadgeState("error", "Koneksi internet terputus"));
+      window.addEventListener("online", () => executeLiveSyncCycle(true));
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) executeLiveSyncCycle(false);
+      });
+
+      BCH_SYNC_INTERVAL_ID = setInterval(() => {
+        if (!document.hidden) executeLiveSyncCycle(false);
+      }, BCH_SYNC_CONFIG.POLL_INTERVAL_MS);
+
+      executeLiveSyncCycle(false);
+    }
+
+    // JALANKAN startAutoLiveSync() PALING PERTAMA TANPA MENUNGGU loadAllData()
     window.addEventListener("DOMContentLoaded", async () => {
-      await App.init();
+      startAutoLiveSync();
+      addFutsalPlayerRow();
+      addHadrohMemberRow();
+      await verifySavedAdminSession();
+      await loadAllData(false);
     });
   </script>
 </body>
