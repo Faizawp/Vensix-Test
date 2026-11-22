@@ -8,7 +8,6 @@
   <!-- Google Fonts: Barlow Condensed & Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <!-- Bootstrap 5.3 CSS & Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -266,6 +265,31 @@
   <!-- ROOT SPA CONTAINER -->
   <div id="app"></div>
 
+  <!-- MODAL 1: KONFIGURASI BACKEND API URL -->
+  <div class="modal fade" id="apiConfigModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header bg-dark text-white rounded-top-4">
+          <h5 class="modal-title font-athletic fs-4"><i class="bi bi-hdd-network-fill text-warning me-2"></i>Konfigurasi Backend Apps Script</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="small text-muted mb-3">
+            Masukkan URL Web App Google Apps Script (<code>https://script.google.com/macros/s/.../exec</code>) yang telah di-deploy dengan akses <strong>Anyone</strong>.
+          </p>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">URL Web App Google Apps Script</label>
+            <input type="url" id="inputApiUrl" class="form-control" placeholder="https://script.google.com/macros/s/AKfycb.../exec" />
+          </div>
+          <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+            <button type="button" class="btn btn-electric btn-sm px-4" onclick="App.saveApiConfig()">Simpan & Uji Koneksi</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL 2: LOGIN PANITIA / ADMIN / DEWAN JURI -->
   <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -354,7 +378,7 @@
      * KONFIGURASI DEFAULT FRONTEND
      * ============================================================================
      */
-    const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbw5g0QokAUWA7UnwzVsq3fXiDBYzfTfF99VrR5Fx6KlntgZrQVRKfkvPyTdVP3Jm2mK/exec"; // Tempel URL Web App Google Apps Script Anda di sini jika ingin permanen
+    const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbw5gSCF9-PvG0Mj11wbRst_VA2H3ji5b8h-mkI8kqs-DTP8XF6xllGZohic70vuuMai/exec"; // Tempel URL Web App Google Apps Script Anda di sini jika ingin permanen
 
     /**
      * ============================================================================
@@ -439,65 +463,69 @@
      * CENTRALIZED API CLIENT (GITHUB PAGES <-> GOOGLE APPS SCRIPT)
      * ============================================================================
      */
-    /**
- * UNIVERSAL API CLIENT (ANTI-CACHE UNTUK REAL LIVE SYNC)
- */
-      async function callApi(action, payload = {}, method = "GET") {
-        const apiUrl = (STATE.apiUrl || DEFAULT_API_URL || "").trim();
-        const token = STATE.adminToken || "";
+    const ApiClient = {
+      getBaseUrl() {
+        return localStorage.getItem("BOASH_API_URL") || DEFAULT_API_URL;
+      },
 
-        if (apiUrl) {
-          if (method === "GET") {
-            const params = new URLSearchParams();
-            params.set("action", action);
-            if (token) params.set("token", token);
-            if (payload && Object.keys(payload).length > 0) {
-              params.set("payload", JSON.stringify(payload));
-            }
-            // Cache-buster wajib agar browser tidak meng-cache respon getSyncPulse & data publik
-            params.set("_ts", Date.now().toString());
+      setBaseUrl(url) {
+        localStorage.setItem("BOASH_API_URL", String(url || "").trim());
+      },
 
-            const res = await fetch(apiUrl + "?" + params.toString(), {
-              method: "GET",
-              cache: "no-store",
-              redirect: "follow"
-            });
-            if (!res.ok) {
-              throw new Error("HTTP Error " + res.status);
-            }
-            return await res.json();
-          } else {
-            const res = await fetch(apiUrl, {
-              method: "POST",
-              cache: "no-store",
-              redirect: "follow",
-              headers: { "Content-Type": "text/plain;charset=utf-8" },
-              body: JSON.stringify({ action: action, token: token, payload: payload })
-            });
-            if (!res.ok) {
-              throw new Error("HTTP Error " + res.status);
-            }
-            return await res.json();
-          }
+      async request(action, payload = {}, useAuth = false, timeoutMs = 15000) {
+        const baseUrl = this.getBaseUrl();
+        if (!baseUrl) {
+          return {
+            success: false,
+            code: 0,
+            message: "URL Web App Backend Google Apps Script belum dikonfigurasi. Klik tombol 'API Config' di bagian atas."
+          };
         }
 
-        // Fallback jika dibuka langsung melalui URL Google Apps Script Web App
-        if (typeof google !== "undefined" && google.script && google.script.run) {
-          return new Promise((resolve, reject) => {
-            const fn = method === "GET" ? "doGet" : "doPost";
-            const arg = method === "GET"
-              ? { parameter: { action, token, payload: JSON.stringify(payload), _ts: Date.now().toString() } }
-              : { postData: { contents: JSON.stringify({ action, token, payload }) } };
-            google.script.run
-              .withSuccessHandler(res => resolve(typeof res === "string" ? JSON.parse(res) : res))
-              .withFailureHandler(err => reject(err))[fn](arg);
+        const token = useAuth && Store.state.user ? Store.state.user.session_token : "";
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+          const response = await fetch(baseUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            redirect: "follow",
+            signal: controller.signal,
+            body: JSON.stringify({
+              action: action,
+              token: token,
+              payload: payload
+            })
           });
-        }
 
-        const banner = document.getElementById("apiSetupBanner");
-        if (banner) banner.classList.remove("hidden");
-        return { success: false, message: "URL Web App GAS (/exec) belum diisi." };
+          clearTimeout(timer);
+          const text = await response.text();
+          let data;
+          try {
+            data = JSON.parse(text);
+          } catch (parseErr) {
+            return {
+              success: false,
+              code: 502,
+              message: "Respons server bukan JSON yang valid. Pastikan Web App di-deploy dengan akses 'Anyone'."
+            };
+          }
+
+          if (data.code === 401 && useAuth) {
+            Store.clearSession();
+          }
+
+          return data;
+        } catch (err) {
+          clearTimeout(timer);
+          if (err.name === "AbortError") {
+            return { success: false, code: 408, message: "Koneksi ke server melebihi batas waktu (Timeout 15 detik)." };
+          }
+          return { success: false, code: 503, message: "Gagal menghubungi server backend: " + err.message };
+        }
       }
+    };
 
     /**
      * ============================================================================
@@ -546,6 +574,9 @@
         })),
         adminMenu: "dashboard",
         apiConnected: false,
+        liveSyncStatus: "ACTIVE", // ACTIVE | SYNCING | ERROR
+        lastSyncVersion: "",
+        lastSyncTime: "-",
         user: (() => {
           try {
             const raw = localStorage.getItem("BOASH_USER_SESSION");
@@ -763,13 +794,30 @@
                     <i class="bi bi-circle-fill me-1" style="font-size:0.55rem;"></i>${s.apiConnected ? 'API Online' : 'API Offline'}
                   </span>
 
-                  <div class="flex items-center gap-2 sm:gap-3">
-                    <!-- PHASE 10 TOMBOL/BADGE LIVE SYNC (BOOTSTRAP ICONS + WHITE BG) -->
-                    <button type="button" id="liveSyncBadge" title="Memeriksa status Live Sync..." class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white text-emerald-600 border border-emerald-200 hover:bg-slate-50 active:scale-95 shadow-sm cursor-pointer transition-all duration-200 select-none">
-                      <i id="liveSyncIcon" class="bi bi-broadcast text-xs leading-none text-emerald-600"></i>
-                      <span id="liveSyncText" class="text-[10px] font-extrabold tracking-wider uppercase leading-none text-emerald-600">LIVE</span>
-                    </button>
-                  </div>
+                  <button type="button" id="liveSyncBadge" onclick="App.triggerManualSync()"
+                    title="Klik untuk sinkronisasi data sekarang"
+                    class="btn btn-sm bg-white fw-bold d-inline-flex align-items-center gap-1 px-2 py-1 shadow-sm ${
+                      s.liveSyncStatus === 'SYNCING'
+                        ? 'text-primary border-primary'
+                        : s.liveSyncStatus === 'ERROR'
+                        ? 'text-danger border-danger'
+                        : 'text-success border-success'
+                    }" style="font-size: 0.72rem; border-width: 1.5px;">
+                    <i id="liveSyncDot" class="bi ${
+                      s.liveSyncStatus === 'SYNCING'
+                        ? 'bi-arrow-repeat'
+                        : s.liveSyncStatus === 'ERROR'
+                        ? 'bi-exclamation-circle-fill'
+                        : 'bi-broadcast'
+                    }"></i>
+                    <span id="liveSyncText">${
+                      s.liveSyncStatus === 'SYNCING'
+                        ? 'Syncing...'
+                        : s.liveSyncStatus === 'ERROR'
+                        ? 'Unsynced'
+                        : 'LIVE • ' + Utils.escapeHTML(s.lastSyncTime)
+                    }</span>
+                  </button>
 
                   <a href="?page=display" target="_blank" class="btn btn-sm btn-outline-info">
                     <i class="bi bi-tv me-1"></i>Display
@@ -6910,161 +6958,233 @@
         if (this._displaySyncTimer) clearInterval(this._displaySyncTimer);
       }
     };
-
     /**
- * ========================================================================
- * PHASE 10: REAL-TIME AUTO LIVE SYNC ENGINE (ANTI-HANG & ANTI-CACHE)
- * ========================================================================
+ * ============================================================================
+ * BOASH CHAMPIONSHIP HUB - COMPLETE AUTO LIVE SYNC & ADMIN REFRESH ENGINE
+ * Phase 10 & 11 Production Ready (Drop-in Script sebelum)
+ * ============================================================================
  */
+      /**
+     * ============================================================================
+     * REAL LIVE SYNC ENGINE (TERINTEGRASI DENGAN STORE, APICLIENT & VIEWS)
+     * ============================================================================
+     */
     const BCH_SYNC_CONFIG = {
-      POLL_INTERVAL_MS: 8000,
-      REQUEST_TIMEOUT_MS: 10000,
-      FORCE_REFRESH_EVERY_TICKS: 3
+      POLL_INTERVAL_MS: 8000,       // Cek pulse perubahan database setiap 8 detik
+      FORCE_REFRESH_EVERY_TICKS: 4  // Sinkronisasi penuh berkala tiap ~32 detik
     };
 
-    let LAST_SYNC_VERSION = null;
-    let SYNC_TICK_COUNT = 0;
-    let IS_SYNCING = false;
-    let BCH_SYNC_INTERVAL_ID = null;
+    Object.assign(App, {
+      _liveSyncTimer: null,
+      _isSyncing: false,
+      _syncTickCount: 0,
 
-    function setLiveSyncBadgeState(state, customText) {
-      const badge = document.getElementById("liveSyncBadge");
-      const icon = document.getElementById("liveSyncIcon");
-      const textEl = document.getElementById("liveSyncText");
-      if (!badge) return;
+      setLiveSyncState(status, timeStr) {
+        Store.state.liveSyncStatus = status;
+        if (timeStr) Store.state.lastSyncTime = timeStr;
 
-      const isDisconnected = state === "error" || !navigator.onLine;
-      const reason = customText || (
-        isDisconnected ? "Tidak tersinkronisasi (Offline / URL GAS bermasalah)" :
-        state === "syncing" ? "Menyinkronkan data terbaru..." :
-        "Live Sync Aktif"
-      );
+        const badge = document.getElementById("liveSyncBadge");
+        const dot = document.getElementById("liveSyncDot");
+        const textEl = document.getElementById("liveSyncText");
+        if (!badge || !textEl) return;
 
-      badge.title = (isDisconnected ? "OFFLINE: " : "ONLINE: ") + reason + " — Klik untuk sinkronisasi manual";
-      if (textEl) textEl.textContent = "LIVE";
+        badge.className = "btn btn-sm bg-white fw-bold d-inline-flex align-items-center gap-1 px-2 py-1 shadow-sm " + (
+          status === "SYNCING" ? "text-primary border-primary" :
+          status === "ERROR" ? "text-danger border-danger" :
+          "text-success border-success"
+        );
 
-      if (isDisconnected) {
-        badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 active:scale-95 shadow-sm cursor-pointer transition-all duration-200 select-none";
-        if (icon) icon.className = "bi bi-wifi-off text-xs leading-none text-rose-600";
-        if (textEl) textEl.className = "text-[10px] font-extrabold tracking-wider uppercase leading-none text-rose-600";
-      } else {
-        badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white text-emerald-600 border border-emerald-200 hover:bg-slate-50 active:scale-95 shadow-sm cursor-pointer transition-all duration-200 select-none";
-        if (icon) {
-          icon.className = state === "syncing"
-            ? "bi bi-broadcast text-xs leading-none text-emerald-600 animate-pulse"
-            : "bi bi-broadcast text-xs leading-none text-emerald-600";
+        if (dot) {
+          dot.className = "bi " + (
+            status === "SYNCING" ? "bi-arrow-repeat" :
+            status === "ERROR" ? "bi-exclamation-circle-fill" :
+            "bi-broadcast"
+          );
         }
-        if (textEl) textEl.className = "text-[10px] font-extrabold tracking-wider uppercase leading-none text-emerald-600";
-      }
-    }
 
-    async function fetchSyncPulseWithTimeout() {
-      const apiUrl = (STATE.apiUrl || DEFAULT_API_URL || "").trim();
-      if (!apiUrl && !(typeof google !== "undefined" && google.script && google.script.run)) {
-        return { success: false, message: "URL Web App GAS (/exec) belum diatur." };
-      }
+        textEl.textContent =
+          status === "SYNCING" ? "Syncing..." :
+          status === "ERROR" ? "Unsynced" :
+          "LIVE • " + Store.state.lastSyncTime;
+      },
 
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), BCH_SYNC_CONFIG.REQUEST_TIMEOUT_MS);
+      isUserBusyInteracting() {
+        // 1. Jangan timpa tampilan jika ada modal Bootstrap yang sedang terbuka
+        if (document.querySelector(".modal.show")) return true;
 
-      try {
-        if (apiUrl) {
-          const url = `${apiUrl}?action=getSyncPulse&_ts=${Date.now()}`;
-          const res = await fetch(url, {
-            method: "GET",
-            cache: "no-store",
-            redirect: "follow",
-            signal: controller.signal
-          });
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          return await res.json();
-        } else {
-          return await callApi("getSyncPulse", {}, "GET");
+        // 2. Jangan ganggu kamera QR Check-in yang sedang aktif memindai
+        if (Store.state.checkinWorkspace && Store.state.checkinWorkspace.scannerActive) return true;
+
+        // 3. Jangan reset form pendaftaran publik yang sedang diisi peserta
+        if (
+          Store.state.mode === "public" &&
+          Store.state.publicTab === "pendaftaran" &&
+          Store.state.regSubTab === "form" &&
+          !Store.state.registrationResult
+        ) {
+          return true;
         }
-      } finally {
-        clearTimeout(timer);
-      }
-    }
 
-    async function executeLiveSyncCycle(forceFullSync = false) {
-      if (!navigator.onLine) {
-        setLiveSyncBadgeState("error", "Koneksi internet perangkat terputus");
-        return;
-      }
-      if (IS_SYNCING) return;
-      IS_SYNCING = true;
-
-      try {
-        const pulseRes = await fetchSyncPulseWithTimeout();
-
-        if (pulseRes && pulseRes.success && pulseRes.data) {
-          const serverVer = String(pulseRes.data.syncVersion ?? "0");
-          SYNC_TICK_COUNT += 1;
-
-          if (LAST_SYNC_VERSION === null && !forceFullSync) {
-            LAST_SYNC_VERSION = serverVer;
-            setLiveSyncBadgeState("active", "Live Sync Aktif");
-            return;
+        // 4. Jangan timpa saat pengguna/admin sedang mengetik di input/textarea/select
+        const activeEl = document.activeElement;
+        if (activeEl) {
+          const tag = activeEl.tagName;
+          if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || activeEl.isContentEditable) {
+            return true;
           }
-
-          if (
-            forceFullSync ||
-            LAST_SYNC_VERSION !== serverVer ||
-            SYNC_TICK_COUNT >= BCH_SYNC_CONFIG.FORCE_REFRESH_EVERY_TICKS
-          ) {
-            setLiveSyncBadgeState("syncing", "Menyinkronkan data...");
-            LAST_SYNC_VERSION = serverVer;
-            SYNC_TICK_COUNT = 0;
-            await performSilentRefreshAllActiveViews();
-            if (forceFullSync) showToast("Data berhasil disinkronkan.", "success");
-          }
-
-          setLiveSyncBadgeState("active", "Live Sync Aktif");
-        } else {
-          const msg = (pulseRes && pulseRes.message) || "Endpoint getSyncPulse tidak merespons";
-          setLiveSyncBadgeState("error", msg);
-          if (forceFullSync) showToast("Sync Gagal: " + msg, "error");
         }
-      } catch (err) {
-        const msg = err.name === "AbortError"
-          ? "Server GAS timeout (lebih dari 10 detik)"
-          : (err.message || "Gagal terhubung ke GAS (Cek izin akses Anyone)");
-        setLiveSyncBadgeState("error", msg);
-        if (forceFullSync) showToast("Sync Error: " + msg, "error");
-      } finally {
-        IS_SYNCING = false;
+
+        return false;
+      },
+
+      async refreshActiveAdminDataSilent() {
+        if (!Store.state.user) return;
+        const menu = Store.state.adminMenu;
+
+        if (menu === "dashboard") {
+          const res = await ApiClient.request("getAdminDashboardSummary", {}, true);
+          if (res.success && res.data) Store.state.adminSummary = res.data;
+        } else if (menu === "pendaftaran") {
+          const res = await ApiClient.request("getAdminRegistrations", {}, true);
+          if (res.success && res.data) Store.state.adminRegistrations = res.data.registrations || [];
+        } else if (menu === "sekolah") {
+          const res = await ApiClient.request("getAdminSchools", {}, true);
+          if (res.success && res.data) Store.state.adminSchools = res.data.schools || [];
+        } else if (["tim_futsal", "pemain_futsal", "badminton", "hadroh"].includes(menu)) {
+          const res = await ApiClient.request("getAdminParticipants", {}, true);
+          if (res.success && res.data) Store.state.adminParticipants = res.data;
+        } else if (["pembagian_grup", "jadwal", "hasil", "klasemen"].includes(menu)) {
+          const res = await ApiClient.request("getAdminTournamentData", {}, true);
+          if (res.success && res.data) Store.state.tournamentData = res.data;
+        } else if (menu === "penilaian_juri") {
+          if (Store.state.hadrohWorkspace && Store.state.hadrohWorkspace.isJuryRole) return;
+          const res = await ApiClient.request("getHadrohScoringWorkspace", {}, true);
+          if (res.success && res.data) Store.state.hadrohWorkspace = res.data;
+        } else if (menu === "qr_checkin") {
+          const res = await ApiClient.request("getAdminCheckinData", {}, true);
+          if (res.success && res.data) {
+            Store.state.checkinWorkspace.stats = res.data.stats || {};
+            Store.state.checkinWorkspace.checkins = res.data.checkins || [];
+            Store.state.checkinWorkspace.approvedList = res.data.approvedList || [];
+          }
+        } else if (menu === "galeri") {
+          const res = await ApiClient.request("getAdminGallery", {}, true);
+          if (res.success && res.data) Store.state.adminGallery = res.data.items || [];
+        } else if (menu === "sertifikat") {
+          const res = await ApiClient.request("getAdminCertificates", {}, true);
+          if (res.success && res.data) Store.state.adminCertificates = res.data.certificates || [];
+        } else if (menu === "whatsapp") {
+          const res = await ApiClient.request("getAdminWhatsAppWorkspace", {}, true);
+          if (res.success && res.data) {
+            Store.state.whatsappWorkspace.stats = res.data.stats || {};
+            Store.state.whatsappWorkspace.logs = res.data.logs || [];
+            Store.state.whatsappWorkspace.recipients = res.data.recipients || [];
+          }
+        } else if (menu === "pengumuman") {
+          const res = await ApiClient.request("getAdminAnnouncements", {}, true);
+          if (res.success && res.data) Store.state.adminAnnouncements = res.data.announcements || [];
+        }
+      },
+
+      async performSilentSyncAll() {
+        if (this.isUserBusyInteracting()) return;
+
+        const requests = [
+          ApiClient.request("getPublicBootstrap", {}, false),
+          ApiClient.request("getPublicPortalData", {}, false),
+          ApiClient.request("getPublicGalleryData", {}, false)
+        ];
+
+        if (Store.state.mode === "display") {
+          requests.push(ApiClient.request("getDisplayBoardData", {}, false));
+        }
+
+        const [bootRes, portalRes, galleryRes, displayRes] = await Promise.all(requests);
+
+        if (bootRes && bootRes.success && bootRes.data) Store.state.bootstrap = bootRes.data;
+        if (portalRes && portalRes.success && portalRes.data) Store.state.portalData = portalRes.data;
+        if (galleryRes && galleryRes.success && galleryRes.data) Store.state.galleryData = galleryRes.data;
+        if (displayRes && displayRes.success && displayRes.data) Store.state.displayData = displayRes.data;
+
+        if (Store.state.mode === "admin" && Store.state.user) {
+          await this.refreshActiveAdminDataSilent();
+        }
+
+        // Cek ulang sebelum render agar tidak menimpa interaksi yang baru dimulai saat fetch berlangsung
+        if (!this.isUserBusyInteracting()) {
+          Views.render();
+        }
+      },
+
+      async executeLiveSyncCycle(forceFullSync = false) {
+        if (this._isSyncing) return;
+        this._isSyncing = true;
+
+        try {
+          const pulseRes = await ApiClient.request("getSyncPulse", {}, false, 8000);
+          const nowTime = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+          if (pulseRes && pulseRes.success && pulseRes.data) {
+            Store.state.apiConnected = true;
+            const serverVer = String(pulseRes.data.syncVersion || "");
+            this._syncTickCount += 1;
+
+            // Inisialisasi versi pertama kali tanpa render ulang ganda
+            if (!Store.state.lastSyncVersion && !forceFullSync) {
+              Store.state.lastSyncVersion = serverVer;
+              this.setLiveSyncState("ACTIVE", nowTime);
+              return;
+            }
+
+            // Jika ada perubahan data di Google Sheets atau waktunya refresh berkala
+            if (
+              forceFullSync ||
+              Store.state.lastSyncVersion !== serverVer ||
+              this._syncTickCount >= BCH_SYNC_CONFIG.FORCE_REFRESH_EVERY_TICKS
+            ) {
+              this.setLiveSyncState("SYNCING");
+              Store.state.lastSyncVersion = serverVer;
+              this._syncTickCount = 0;
+              await this.performSilentSyncAll();
+            }
+
+            this.setLiveSyncState("ACTIVE", nowTime);
+          } else {
+            this.setLiveSyncState("ERROR");
+          }
+        } catch (err) {
+          this.setLiveSyncState("ERROR");
+        } finally {
+          this._isSyncing = false;
+        }
+      },
+
+      async triggerManualSync() {
+        Utils.showToast("Menyinkronkan data terbaru dari server...", "primary");
+        await this.executeLiveSyncCycle(true);
+      },
+
+      startAutoLiveSync() {
+        if (this._liveSyncTimer) clearInterval(this._liveSyncTimer);
+
+        document.addEventListener("visibilitychange", () => {
+          if (!document.hidden) {
+            this.executeLiveSyncCycle(false);
+          }
+        });
+
+        this._liveSyncTimer = setInterval(() => {
+          if (!document.hidden) {
+            this.executeLiveSyncCycle(false);
+          }
+        }, BCH_SYNC_CONFIG.POLL_INTERVAL_MS);
       }
-    }
+    });
 
-    function startAutoLiveSync() {
-      if (window.__BCH_LIVE_SYNC_INITIALIZED__) return;
-      window.__BCH_LIVE_SYNC_INITIALIZED__ = true;
-
-      const badge = document.getElementById("liveSyncBadge");
-      if (badge) {
-        badge.addEventListener("click", () => executeLiveSyncCycle(true));
-      }
-
-      window.addEventListener("offline", () => setLiveSyncBadgeState("error", "Koneksi internet terputus"));
-      window.addEventListener("online", () => executeLiveSyncCycle(true));
-      document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) executeLiveSyncCycle(false);
-      });
-
-      BCH_SYNC_INTERVAL_ID = setInterval(() => {
-        if (!document.hidden) executeLiveSyncCycle(false);
-      }, BCH_SYNC_CONFIG.POLL_INTERVAL_MS);
-
-      executeLiveSyncCycle(false);
-    }
-
-    // JALANKAN startAutoLiveSync() PALING PERTAMA TANPA MENUNGGU loadAllData()
-    window.addEventListener("DOMContentLoaded", async () => {
-      startAutoLiveSync();
-      addFutsalPlayerRow();
-      addHadrohMemberRow();
-      await verifySavedAdminSession();
-      await loadAllData(false);
+    // Jalankan inisialisasi aplikasi utama & aktifkan mesin Auto Live Sync saat DOM siap
+    document.addEventListener("DOMContentLoaded", async () => {
+      await App.init();
+      App.startAutoLiveSync();
     });
   </script>
 </body>
