@@ -265,59 +265,6 @@
   <!-- ROOT SPA CONTAINER -->
   <div id="app"></div>
 
-  <!-- MODAL 1: KONFIGURASI BACKEND API URL -->
-  <div class="modal fade" id="apiConfigModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg rounded-4">
-        <div class="modal-header bg-dark text-white rounded-top-4">
-          <h5 class="modal-title font-athletic fs-4"><i class="bi bi-hdd-network-fill text-warning me-2"></i>Konfigurasi Backend Apps Script</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body p-4">
-          <p class="small text-muted mb-3">
-            Masukkan URL Web App Google Apps Script (<code>https://script.google.com/macros/s/.../exec</code>) yang telah di-deploy dengan akses <strong>Anyone</strong>.
-          </p>
-          <div class="mb-3">
-            <label class="form-label small fw-bold">URL Web App Google Apps Script</label>
-            <input type="url" id="inputApiUrl" class="form-control" placeholder="https://script.google.com/macros/s/AKfycb.../exec" />
-          </div>
-          <div class="d-flex justify-content-end gap-2">
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-            <button type="button" class="btn btn-electric btn-sm px-4" onclick="App.saveApiConfig()">Simpan & Uji Koneksi</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL 2: LOGIN PANITIA / ADMIN / DEWAN JURI -->
-  <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg rounded-4">
-        <div class="modal-header text-white rounded-top-4" style="background: var(--navy-primary);">
-          <div>
-            <span class="badge bg-warning text-dark mb-1">PORTAL PANITIA & JURI</span>
-            <h5 class="modal-title font-athletic fs-3 mb-0">Login VENSIX SMP BOASH</h5>
-          </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <form onsubmit="App.handleLogin(event)" class="modal-body p-4">
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Username</label>
-            <input type="text" id="loginUsername" class="form-control" placeholder="Masukkan username panitia/juri" required />
-          </div>
-          <div class="mb-4">
-            <label class="form-label small fw-semibold">Password</label>
-            <input type="password" id="loginPassword" class="form-control" placeholder="Masukkan password" required />
-          </div>
-          <button type="submit" id="btnLoginSubmit" class="btn btn-gold w-100 py-2 fw-bold">
-            <i class="bi bi-box-arrow-in-right me-1"></i>Masuk ke Dashboard
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-
   <!-- MODAL 3: DETAIL PENGUMUMAN PUBLIK -->
   <div class="modal fade" id="announcementDetailModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -810,60 +757,6 @@
                     `).join("")}
                   </ul>
                 ` : `<div class="mx-auto"></div>`}
-
-                <div class="d-flex flex-wrap align-items-center gap-2 mt-2 mt-lg-0">
-                  <span class="badge ${s.apiConnected ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'} px-2 py-2">
-                    <i class="bi bi-circle-fill me-1" style="font-size:0.55rem;"></i>${s.apiConnected ? 'API Online' : 'API Offline'}
-                  </span>
-
-                  <button type="button" id="liveSyncBadge" onclick="App.triggerManualSync()"
-                    title="Klik untuk sinkronisasi data sekarang"
-                    class="btn btn-sm bg-white fw-bold d-inline-flex align-items-center gap-1 px-2 py-1 shadow-sm ${
-                      s.liveSyncStatus === 'SYNCING'
-                        ? 'text-primary border-primary'
-                        : s.liveSyncStatus === 'ERROR'
-                        ? 'text-danger border-danger'
-                        : 'text-success border-success'
-                    }" style="font-size: 0.72rem; border-width: 1.5px;">
-                    <i id="liveSyncDot" class="bi ${
-                      s.liveSyncStatus === 'SYNCING'
-                        ? 'bi-arrow-repeat'
-                        : s.liveSyncStatus === 'ERROR'
-                        ? 'bi-exclamation-circle-fill'
-                        : 'bi-broadcast'
-                    }"></i>
-                    <span id="liveSyncText">${
-                      s.liveSyncStatus === 'SYNCING'
-                        ? 'Syncing...'
-                        : s.liveSyncStatus === 'ERROR'
-                        ? 'Unsynced'
-                        : 'LIVE • ' + Utils.escapeHTML(s.lastSyncTime)
-                    }</span>
-                  </button>
-
-                  <a href="?page=display" target="_blank" class="btn btn-sm btn-outline-info">
-                    <i class="bi bi-tv me-1"></i>Display
-                  </a>
-
-                  ${user ? `
-                    ${s.mode === "public" ? `
-                      <button class="btn btn-sm btn-electric" onclick="App.switchMode('admin')">
-                        <i class="bi bi-speedometer2 me-1"></i>Dashboard (${Utils.escapeHTML(user.role_code)})
-                      </button>
-                    ` : `
-                      <button class="btn btn-sm btn-outline-warning" onclick="App.switchMode('public')">
-                        <i class="bi bi-globe me-1"></i>Portal Publik
-                      </button>
-                    `}
-                    <button class="btn btn-sm btn-danger" onclick="App.handleLogout()" title="Keluar">
-                      <i class="bi bi-box-arrow-right"></i>
-                    </button>
-                  ` : `
-                    <button class="btn btn-sm btn-gold" onclick="App.openLoginModal()">
-                      <i class="bi bi-shield-lock-fill me-1"></i>Login Panitia
-                    </button>
-                  `}
-                </div>
               </div>
             </div>
           </nav>
