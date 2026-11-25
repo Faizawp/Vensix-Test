@@ -587,7 +587,7 @@
           futsal_official: "",
           futsal_logo: "",
           futsal_dokumen: "",
-          bdm_kategori: "",
+          bdm_kategori_id: "",
           bdm_pemain_1: "",
           hadroh_nama_grup: "",
           hadroh_ketua: "",
@@ -2174,21 +2174,35 @@
               </div>
             ` : ""}
 
-            ${cabang === "BADMINTON" ? `
-              <h5 class="font-athletic fs-3 fw-bold text-primary mb-3">3. Data Kategori & Atlet Badminton</h5>
-              <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                  <label class="form-label small fw-semibold">Kategori Pertandingan *</label>
-                  <select id="regBdmKategori" class="form-select" onchange="Views.render()">
-                    ${cats.map(c => `<option value="${Utils.escapeHTML(c.kategori_id)}" data-tipe="${Utils.escapeHTML(c.tipe)}">${Utils.escapeHTML(c.nama_kategori)} (${Utils.escapeHTML(c.tipe)})</option>`).join("")}
-                  </select>
+            ${cabang === "BADMINTON" ? (() => {
+              const selectedBdmCatId = draft.bdm_kategori_id || (cats[0] ? cats[0].kategori_id : "");
+              const selectedBdmCat = cats.find(c => c.kategori_id === selectedBdmCatId) || cats[0] || {};
+              const isBdmDouble = ["DOUBLE", "GANDA"].includes(String(selectedBdmCat.tipe || "").toUpperCase());
+
+              return `
+                <h5 class="font-athletic fs-3 fw-bold text-primary mb-3">3. Data Kategori & Atlet Badminton</h5>
+                <div class="row g-3 mb-4">
+                  <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Kategori Pertandingan *</label>
+                    <select id="regBdmKategori" class="form-select" onchange="App.changeBadmintonCategory(this.value)">
+                      ${cats.map(c => `
+                        <option value="${Utils.escapeHTML(c.kategori_id)}"
+                                data-tipe="${Utils.escapeHTML(c.tipe)}"
+                                ${c.kategori_id === selectedBdmCatId ? 'selected' : ''}>
+                          ${Utils.escapeHTML(c.nama_kategori)} (${Utils.escapeHTML(c.tipe)})
+                        </option>
+                      `).join("")}
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Nama Pemain Utama *</label>
+                    <input type="text" id="regBdmPemain1" class="form-control"
+                           value="${Utils.escapeHTML(draft.bdm_pemain_1)}"
+                           oninput="App.updateRegDraft('bdm_pemain_1', this.value)" required />
+                  </div>
                 </div>
-                <div class="col-md-4">
-                  <label class="form-label small fw-semibold">Nama Pemain Utama *</label>
-                  <input type="text" id="regBdmPemain1" class="form-control" value="${draft.nama_pemain1 || ''}" required />
-                </div>
-              </div>
-            ` : ""}
+              `;
+            })() : ""}
 
             ${cabang === "HADROH" ? `
               <h5 class="font-athletic fs-3 fw-bold text-primary mb-3">3. Data Grup & Anggota Hadroh</h5>
@@ -4490,7 +4504,6 @@
       },
 
       /* --- REGISTRATION CONTROLLERS --- */
-      /* --- REGISTRATION CONTROLLERS --- */
       updateRegDraft(field, val) {
         if (!Store.state.regFormDraft) Store.state.regFormDraft = {};
         Store.state.regFormDraft[field] = val;
@@ -4520,7 +4533,9 @@
           futsal_dokumen_url: readVal("regFutsalDokumen", d.futsal_dokumen_url),
           hadroh_nama_grup: readVal("regHadrohNamaGrup", d.hadroh_nama_grup),
           hadroh_nama_ketua: readVal("regHadrohKetua", d.hadroh_nama_ketua),
-          hadroh_logo_url: readVal("regHadrohLogo", d.hadroh_logo_url)
+          hadroh_logo_url: readVal("regHadrohLogo", d.hadroh_logo_url),
+          bdm_kategori_id: readVal("regBdmKategori", d.bdm_kategori_id),
+          bdm_pemain_1: readVal("regBdmPemain1", d.bdm_pemain_1),
         };
       },
 
@@ -4551,7 +4566,13 @@
           is_kapten: i === 0
         }));
       },
-
+      
+      changeBadmintonCategory(kategoriId) {
+        this.syncRegFormDraftFromDom();
+        Store.state.regFormDraft.bdm_kategori_id = kategoriId;
+        Views.render();
+      },
+      
       addFutsalPlayerRow(maxPlayers) {
         if (Store.state.regFutsalPlayers.length >= maxPlayers) {
           Utils.showToast(`Maksimal pemain Futsal adalah ${maxPlayers} orang.`, "warning");
