@@ -589,6 +589,7 @@
           futsal_dokumen: "",
           bdm_kategori_id: "",
           bdm_pemain_1: "",
+          bdm_pemain_2: "",
           hadroh_nama_grup: "",
           hadroh_ketua: "",
           hadroh_logo: ""
@@ -2200,6 +2201,14 @@
                            value="${Utils.escapeHTML(draft.bdm_pemain_1)}"
                            oninput="App.updateRegDraft('bdm_pemain_1', this.value)" required />
                   </div>
+                  ${isBdmDouble ? `
+                    <div class="col-md-4">
+                      <label class="form-label small fw-semibold">Nama Pemain 2 *</label>
+                      <input type="text" id="regBdmPemain2" class="form-control"
+                             value="${Utils.escapeHTML(draft.bdm_pemain_2)}"
+                             oninput="App.updateRegDraft('bdm_pemain_2', this.value)" required />
+                    </div>
+                  ` : ""}
                 </div>
               `;
             })() : ""}
@@ -4536,6 +4545,7 @@
           hadroh_logo_url: readVal("regHadrohLogo", d.hadroh_logo_url),
           bdm_kategori_id: readVal("regBdmKategori", d.bdm_kategori_id),
           bdm_pemain_1: readVal("regBdmPemain1", d.bdm_pemain_1),
+          bdm_pemain_2: readVal("regBdmPemain2", d.bdm_pemain_2)
         };
       },
 
@@ -4572,7 +4582,7 @@
         Store.state.regFormDraft.bdm_kategori_id = kategoriId;
         Views.render();
       },
-      
+
       addFutsalPlayerRow(maxPlayers) {
         if (Store.state.regFutsalPlayers.length >= maxPlayers) {
           Utils.showToast(`Maksimal pemain Futsal adalah ${maxPlayers} orang.`, "warning");
@@ -4666,10 +4676,11 @@
             players: Store.state.regFutsalPlayers
           };
         } else if (cabang === "BADMINTON") {
+          const p2El = document.getElementById("regBdmPemain2");
           payload.badminton = {
             kategori_id: document.getElementById("regBdmKategori").value,
             nama_pemain_1: document.getElementById("regBdmPemain1").value,
-            nama_pemain_2: document.getElementById("regBdmPemain2").value
+            nama_pemain_2: p2El ? p2El.value : ""
           };
         } else if (cabang === "HADROH") {
           payload.hadroh = {
